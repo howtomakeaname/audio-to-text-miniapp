@@ -148,19 +148,51 @@ createPage({
   // 选择本地文件
   async chooseLocalFile() {
     try {
-      const res = await wx.chooseMedia({
+      // wx.chooseMedia 主要用于图片/视频，获取不到正确的音频文件名和类型
+      // 为了能够选择音频文件并获取真实文件名，我们建议统一用 wx.chooseMessageFile 或者进行后缀解析
+      const res = await wx.chooseMessageFile({
         count: 1,
-        mediaType: ['audio'],
-        sourceType: ['album']
+        type: 'file',
+        extension: ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'wma', 'flac', 'amr', 'ape']
       })
 
       if (res.tempFiles && res.tempFiles.length > 0) {
         const file = res.tempFiles[0]
+        
+        if (file.size > 10 * 1024 * 1024) {
+          wx.showToast({ title: '文件大小不能超过10MB', icon: 'none' })
+          return
+        }
+        
+        let fileExt = ''
+        if (file.name && file.name.includes('.')) {
+          fileExt = file.name.split('.').pop().toLowerCase()
+        }
+
+        const validExtensions = ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'wma', 'flac', 'amr', 'ape']
+        if (!validExtensions.includes(fileExt)) {
+          wx.showToast({ title: '仅支持音频格式', icon: 'none' })
+          return
+        }
+        
+        // 根据后缀映射正确的 contentType
+        const mimeTypes = {
+          'mp3': 'audio/mpeg',
+          'wav': 'audio/wav',
+          'm4a': 'audio/mp4',
+          'aac': 'audio/aac',
+          'ogg': 'audio/ogg',
+          'wma': 'audio/x-ms-wma',
+          'flac': 'audio/flac',
+          'amr': 'audio/amr',
+          'ape': 'audio/ape'
+        }
+        
         this.uploadFile({
-          path: file.tempFilePath,
-          name: file.name || '录音文件',
+          path: file.path,
+          name: file.name || `录音文件.${fileExt || 'mp3'}`,
           size: file.size,
-          type: file.fileType || 'audio/mp3'
+          type: mimeTypes[fileExt] || 'audio/mpeg'
         })
       }
     } catch (error) {
@@ -177,16 +209,46 @@ createPage({
     try {
       const res = await wx.chooseMessageFile({
         count: 1,
-        type: 'audio'
+        type: 'file',
+        extension: ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'wma', 'flac', 'amr', 'ape']
       })
 
       if (res.tempFiles && res.tempFiles.length > 0) {
         const file = res.tempFiles[0]
+        
+        if (file.size > 10 * 1024 * 1024) {
+          wx.showToast({ title: '文件大小不能超过10MB', icon: 'none' })
+          return
+        }
+
+        let fileExt = ''
+        if (file.name && file.name.includes('.')) {
+          fileExt = file.name.split('.').pop().toLowerCase()
+        }
+
+        const validExtensions = ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'wma', 'flac', 'amr', 'ape']
+        if (!validExtensions.includes(fileExt)) {
+          wx.showToast({ title: '仅支持音频格式', icon: 'none' })
+          return
+        }
+        
+        const mimeTypes = {
+          'mp3': 'audio/mpeg',
+          'wav': 'audio/wav',
+          'm4a': 'audio/mp4',
+          'aac': 'audio/aac',
+          'ogg': 'audio/ogg',
+          'wma': 'audio/x-ms-wma',
+          'flac': 'audio/flac',
+          'amr': 'audio/amr',
+          'ape': 'audio/ape'
+        }
+
         this.uploadFile({
           path: file.path,
-          name: file.name,
+          name: file.name || `聊天文件.${fileExt || 'mp3'}`,
           size: file.size,
-          type: file.type || 'audio/mp3'
+          type: mimeTypes[fileExt] || 'audio/mpeg'
         })
       }
     } catch (error) {
@@ -208,10 +270,20 @@ createPage({
     try {
       // 获取OSS签名并上传
       const { getOSSSignature, uploadFileToOSS } = require('../../api/oss')
+      const { createFileWithTranscription } = require('../../api/file')
+      
       const signRes = await getOSSSignature(file.name, file.type)
       const signatureData = signRes.data
 
       await uploadFileToOSS(file.path, signatureData)
+      
+      // 通知后端创建文件记录和转录任务
+      await createFileWithTranscription({
+        originalName: file.name,
+        ossKey: signatureData.formData.key,
+        fileSize: file.size,
+        mimeType: file.type
+      })
 
       wx.hideLoading()
       wx.showToast({

@@ -37,3 +37,16 @@ export const deleteFile = (id) => {
     method: 'DELETE'
   })
 }
+
+/**
+ * 创建文件记录并启动转录
+ * @param {Object} data - {originalName, ossKey, fileSize, mimeType}
+ * @returns {Promise}
+ */
+export const createFileWithTranscription = (data) => {
+  return request({
+    url: '/files/with-transcription',
+    method: 'POST',
+    data
+  })
+}
