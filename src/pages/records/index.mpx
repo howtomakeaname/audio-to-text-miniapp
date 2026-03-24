@@ -1,0 +1,427 @@
+<template>
+  <view class="records-page">
+    <!-- 页面头部 -->
+    <view class="page-header">
+      <text class="page-title">转录记录</text>
+      <text class="page-subtitle">共 {{total}} 个文件</text>
+    </view>
+
+    <!-- 筛选标签 -->
+    <view class="filter-tabs">
+      <view
+        wx:for="{{filters}}"
+        wx:key="value"
+        class="tab-item {{currentFilter === item.value ? 'active' : ''}}"
+        bindtap="switchFilter"
+        data-value="{{item.value}}"
+      >
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+
+    <!-- 文件列表 -->
+    <view class="file-list">
+      <view
+        wx:for="{{fileList}}"
+        wx:key="id"
+        class="file-card"
+        bindtap="viewDetail"
+        data-id="{{item.id}}"
+      >
+        <!-- 文件图标 -->
+        <view class="file-icon">
+          <icon name="audio" size="32" color="#3d8b7a" />
+        </view>
+
+        <!-- 文件信息 -->
+        <view class="file-info">
+          <text class="file-name">{{item.originalName}}</text>
+          <view class="file-meta">
+            <text>{{item.durationStr}}</text>
+            <text class="dot">·</text>
+            <text>{{item.sizeStr}}</text>
+            <text class="dot">·</text>
+            <text>{{item.createdAtStr}}</text>
+          </view>
+        </view>
+
+        <!-- 状态 -->
+        <view class="status-wrapper">
+          <view class="status-badge {{item.transcriptionStatus}}">
+            <text>{{item.statusText}}</text>
+          </view>
+          <icon name="chevron-right" size="16" color="#d1d5db" />
+        </view>
+      </view>
+
+      <!-- 空状态 -->
+      <view wx:if="{{fileList.length === 0 && !loading}}" class="empty-state">
+        <icon name="record" size="80" color="#d1d5db" />
+        <text class="empty-text">暂无记录</text>
+        <text class="empty-subtext">快去上传音频文件吧</text>
+      </view>
+
+      <!-- 加载更多 -->
+      <view wx:if="{{loading}}" class="loading-more">
+        <view class="loading-spinner"></view>
+        <text>加载中...</text>
+      </view>
+
+      <view wx:if="{{!hasMore && fileList.length > 0}}" class="no-more">
+        <text>没有更多了</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { useUserStore } from '../../stores/user'
+import { useFileStore } from '../../stores/file'
+import { formatDuration, formatFileSize, formatTime } from '../../utils/format'
+
+const filters = [
+  { label: '全部', value: 'all' },
+  { label: '进行中', value: 'processing' },
+  { label: '已完成', value: 'completed' },
+  { label: '失败', value: 'failed' }
+]
+
+createPage({
+  data: {
+    filters,
+    currentFilter: 'all',
+    fileList: [],
+    loading: false,
+    hasMore: true,
+    total: 0,
+    page: 1
+  },
+
+  onLoad() {
+    this.checkLogin()
+    this.loadFileList()
+  },
+
+  onShow() {
+    // 刷新列表
+    this.loadFileList(true)
+  },
+
+  onPullDownRefresh() {
+    this.loadFileList(true).then(() => {
+      wx.stopPullDownRefresh()
+    })
+  },
+
+  onReachBottom() {
+    if (this.data.hasMore && !this.data.loading) {
+      this.loadMore()
+    }
+  },
+
+  async checkLogin() {
+    const userStore = useUserStore()
+    const isLoggedIn = await userStore.checkLoginStatus()
+
+    if (!isLoggedIn) {
+      wx.reLaunch({
+        url: '/pages/login/index'
+      })
+    }
+  },
+
+  async loadFileList(reset = false) {
+    if (this.data.loading) return
+
+    this.setData({ loading: true })
+
+    if (reset) {
+      this.setData({ page: 1, fileList: [] })
+    }
+
+    const fileStore = useFileStore()
+
+    try {
+      let status = this.data.currentFilter === 'all' ? undefined : this.data.currentFilter
+
+      const res = await fileStore.fetchFileList({
+        page: this.data.page,
+        limit: 20,
+        status: status === 'processing' ? 'active' : 'active'
+      })
+
+      // 前端筛选
+      let files = res.data || []
+      if (status && status !== 'active') {
+        files = files.filter(f => f.transcriptionStatus === status)
+      }
+
+      const formattedFiles = files.map(file => ({
+        ...file,
+        durationStr: formatDuration(file.duration),
+        sizeStr: formatFileSize(file.fileSize),
+        createdAtStr: formatTime(file.createdAt),
+        statusText: this.getStatusText(file.transcriptionStatus)
+      }))
+
+      this.setData({
+        fileList: reset ? formattedFiles : [...this.data.fileList, ...formattedFiles],
+        total: formattedFiles.length,
+        hasMore: formattedFiles.length === 20,
+        loading: false
+      })
+    } catch (error) {
+      console.error('加载文件列表失败', error)
+      this.setData({ loading: false })
+    }
+  },
+
+  loadMore() {
+    this.setData({ page: this.data.page + 1 })
+    this.loadFileList()
+  },
+
+  switchFilter(e) {
+    const value = e.currentTarget.dataset.value
+    this.setData({ currentFilter: value })
+    this.loadFileList(true)
+  },
+
+  getStatusText(status) {
+    const statusMap = {
+      pending: '等待中',
+      processing: '转录中',
+      completed: '已完成',
+      failed: '失败'
+    }
+    return statusMap[status] || '未知'
+  },
+
+  viewDetail(e) {
+    const id = e.currentTarget.dataset.id
+    wx.navigateTo({
+      url: `/pages/detail/index?id=${id}`
+    })
+  }
+})
+</script>
+
+<style>
+.records-page {
+  min-height: 100vh;
+  background: #f9fafb;
+  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
+}
+
+/* 页面头部 */
+.page-header {
+  padding: 48rpx 32rpx 32rpx;
+  background: linear-gradient(135deg, #3d8b7a 0%, #2d6f61 100%);
+}
+
+.page-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8rpx;
+}
+
+.page-subtitle {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 筛选标签 */
+.filter-tabs {
+  display: flex;
+  padding: 24rpx 32rpx;
+  background: #ffffff;
+  border-bottom: 1rpx solid #f3f4f6;
+  gap: 16rpx;
+}
+
+.tab-item {
+  padding: 12rpx 24rpx;
+  border-radius: 28rpx;
+  background: #f3f4f6;
+  transition: all 0.2s ease;
+}
+
+.tab-item text {
+  font-size: 26rpx;
+  color: #6b7280;
+}
+
+.tab-item.active {
+  background: #3d8b7a;
+}
+
+.tab-item.active text {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* 文件列表 */
+.file-list {
+  padding: 24rpx 32rpx;
+}
+
+.file-card {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.file-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+}
+
+.file-icon {
+  width: 80rpx;
+  height: 80rpx;
+  background: #f0f7f4;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  display: block;
+  font-size: 30rpx;
+  color: #1f2937;
+  margin-bottom: 8rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-meta {
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.file-meta .dot {
+  margin: 0 8rpx;
+}
+
+.status-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+
+.status-badge {
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.processing {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.status-badge.completed {
+  background: #dcede6;
+  color: #3d8b7a;
+}
+
+.status-badge.failed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 32rpx;
+}
+
+.empty-icon {
+  width: 160rpx;
+  height: 160rpx;
+  background: #f3f4f6;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 32rpx;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #6b7280;
+  margin-bottom: 8rpx;
+}
+
+.empty-subtext {
+  font-size: 26rpx;
+  color: #9ca3af;
+}
+
+/* 加载更多 */
+.loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx;
+  gap: 12rpx;
+}
+
+.loading-spinner {
+  width: 32rpx;
+  height: 32rpx;
+  border: 3rpx solid #e5e7eb;
+  border-top-color: #3d8b7a;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-more text {
+  font-size: 26rpx;
+  color: #9ca3af;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.no-more {
+  text-align: center;
+  padding: 32rpx;
+}
+
+.no-more text {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+</style>

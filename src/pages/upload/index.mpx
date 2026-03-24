@@ -1,0 +1,467 @@
+<template>
+  <view class="upload-page">
+    <!-- 页面标题 -->
+    <view class="page-header">
+      <text class="page-title">上传音频</text>
+      <text class="page-subtitle">支持 MP3、WAV、M4A 格式</text>
+    </view>
+
+    <!-- 上传选项卡片 -->
+    <view class="upload-options">
+      <!-- 本地文件上传 -->
+      <view class="option-card" bindtap="chooseLocalFile">
+        <view class="option-icon local">
+          <icon name="upload" size="40" color="#ffffff" />
+        </view>
+        <view class="option-content">
+          <text class="option-title">本地文件</text>
+          <text class="option-desc">从手机存储中选择音频文件</text>
+        </view>
+        <icon name="chevron-right" size="20" color="#9ca3af" />
+      </view>
+
+      <!-- 微信聊天记录 -->
+      <view class="option-card" bindtap="chooseMessageFile">
+        <view class="option-icon wechat">
+          <icon name="message" size="40" color="#ffffff" />
+        </view>
+        <view class="option-content">
+          <text class="option-title">微信聊天记录</text>
+          <text class="option-desc">从聊天文件中选择音频</text>
+        </view>
+        <icon name="chevron-right" size="20" color="#9ca3af" />
+      </view>
+    </view>
+
+    <!-- 最近上传 -->
+    <view class="recent-section" wx:if="{{recentFiles.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">最近上传</text>
+        <text class="view-all" bindtap="viewAllRecords">查看全部</text>
+      </view>
+
+      <view class="recent-list">
+        <view
+          wx:for="{{recentFiles}}"
+          wx:key="id"
+          class="recent-item"
+          bindtap="viewFileDetail"
+          data-id="{{item.id}}"
+        >
+          <view class="file-icon">
+            <icon name="audio" size="24" color="#3d8b7a" />
+          </view>
+          <view class="file-info">
+            <text class="file-name">{{item.originalName}}</text>
+            <text class="file-meta">{{item.durationStr}} · {{item.createdAtStr}}</text>
+          </view>
+          <view class="status-badge {{item.transcriptionStatus}}">
+            <text>{{item.statusText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 提示信息 -->
+    <view class="tips-section">
+      <view class="tips-item">
+        <icon name="check" size="14" color="#3d8b7a" />
+        <text>单文件最大支持 500MB</text>
+      </view>
+      <view class="tips-item">
+        <icon name="check" size="14" color="#3d8b7a" />
+        <text>支持中文、英文等多语种识别</text>
+      </view>
+      <view class="tips-item">
+        <icon name="check" size="14" color="#3d8b7a" />
+        <text>转录完成后自动生成摘要</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { useUserStore } from '../../stores/user'
+import { useFileStore } from '../../stores/file'
+import { formatDuration, formatTime } from '../../utils/format'
+
+createPage({
+  data: {
+    recentFiles: []
+  },
+
+  onLoad() {
+    this.checkLogin()
+    this.loadRecentFiles()
+  },
+
+  onShow() {
+    this.loadRecentFiles()
+  },
+
+  async checkLogin() {
+    const userStore = useUserStore()
+    const isLoggedIn = await userStore.checkLoginStatus()
+
+    if (!isLoggedIn) {
+      wx.reLaunch({
+        url: '/pages/login/index'
+      })
+    }
+  },
+
+  async loadRecentFiles() {
+    const fileStore = useFileStore()
+
+    try {
+      await fileStore.fetchFileList({ limit: 5 })
+
+      const files = fileStore.files.slice(0, 5).map(file => ({
+        ...file,
+        durationStr: formatDuration(file.duration),
+        createdAtStr: formatTime(file.createdAt),
+        statusText: this.getStatusText(file.transcriptionStatus)
+      }))
+
+      this.setData({ recentFiles: files })
+    } catch (error) {
+      console.error('加载最近文件失败', error)
+    }
+  },
+
+  getStatusText(status) {
+    const statusMap = {
+      pending: '等待中',
+      processing: '转录中',
+      completed: '已完成',
+      failed: '失败'
+    }
+    return statusMap[status] || '未知'
+  },
+
+  // 选择本地文件
+  async chooseLocalFile() {
+    try {
+      const res = await wx.chooseMedia({
+        count: 1,
+        mediaType: ['audio'],
+        sourceType: ['album']
+      })
+
+      if (res.tempFiles && res.tempFiles.length > 0) {
+        const file = res.tempFiles[0]
+        this.uploadFile({
+          path: file.tempFilePath,
+          name: file.name || '录音文件',
+          size: file.size,
+          type: file.fileType || 'audio/mp3'
+        })
+      }
+    } catch (error) {
+      console.error('选择文件失败', error)
+      wx.showToast({
+        title: '选择文件失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 选择微信聊天文件
+  async chooseMessageFile() {
+    try {
+      const res = await wx.chooseMessageFile({
+        count: 1,
+        type: 'audio'
+      })
+
+      if (res.tempFiles && res.tempFiles.length > 0) {
+        const file = res.tempFiles[0]
+        this.uploadFile({
+          path: file.path,
+          name: file.name,
+          size: file.size,
+          type: file.type || 'audio/mp3'
+        })
+      }
+    } catch (error) {
+      console.error('选择文件失败', error)
+      wx.showToast({
+        title: '选择文件失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 上传文件
+  async uploadFile(file) {
+    wx.showLoading({
+      title: '上传中...',
+      mask: true
+    })
+
+    try {
+      // 获取OSS签名并上传
+      const { getOSSSignature, uploadFileToOSS } = require('../../api/oss')
+      const signRes = await getOSSSignature(file.name, file.type)
+      const signatureData = signRes.data
+
+      await uploadFileToOSS(file.path, signatureData)
+
+      wx.hideLoading()
+      wx.showToast({
+        title: '上传成功',
+        icon: 'success'
+      })
+
+      // 刷新最近文件列表
+      this.loadRecentFiles()
+
+      // 跳转到记录页面
+      setTimeout(() => {
+        wx.switchTab({
+          url: '/pages/records/index'
+        })
+      }, 1000)
+    } catch (error) {
+      wx.hideLoading()
+      console.error('上传失败', error)
+      wx.showToast({
+        title: '上传失败，请重试',
+        icon: 'none'
+      })
+    }
+  },
+
+  // 查看全部记录
+  viewAllRecords() {
+    wx.switchTab({
+      url: '/pages/records/index'
+    })
+  },
+
+  // 查看文件详情
+  viewFileDetail(e) {
+    const id = e.currentTarget.dataset.id
+    wx.navigateTo({
+      url: `/pages/detail/index?id=${id}`
+    })
+  }
+})
+</script>
+
+<style>
+.upload-page {
+  min-height: 100vh;
+  background: #f9fafb;
+  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
+}
+
+/* 页面头部 */
+.page-header {
+  padding: 48rpx 32rpx 32rpx;
+  background: linear-gradient(135deg, #3d8b7a 0%, #2d6f61 100%);
+}
+
+.page-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8rpx;
+}
+
+.page-subtitle {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 上传选项 */
+.upload-options {
+  padding: 24rpx 32rpx;
+}
+
+.option-card {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.option-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+}
+
+.option-icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.option-icon.local {
+  background: linear-gradient(135deg, #3d8b7a 0%, #2d6f61 100%);
+}
+
+.option-icon.wechat {
+  background: linear-gradient(135deg, #07c160 0%, #059e4c 100%);
+}
+
+.option-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.option-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 8rpx;
+}
+
+.option-desc {
+  font-size: 24rpx;
+  color: #6b7280;
+}
+
+/* 最近上传 */
+.recent-section {
+  padding: 0 32rpx 32rpx;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.view-all {
+  font-size: 26rpx;
+  color: #3d8b7a;
+}
+
+.view-all:active {
+  opacity: 0.7;
+}
+
+.recent-list {
+  background: #ffffff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 28rpx;
+  border-bottom: 1rpx solid #f3f4f6;
+}
+
+.recent-item:last-child {
+  border-bottom: none;
+}
+
+.recent-item:active {
+  background: #f9fafb;
+}
+
+.file-icon {
+  width: 72rpx;
+  height: 72rpx;
+  background: #f0f7f4;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  display: block;
+  font-size: 28rpx;
+  color: #1f2937;
+  margin-bottom: 6rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-meta {
+  font-size: 22rpx;
+  color: #9ca3af;
+}
+
+.status-badge {
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.processing {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.status-badge.completed {
+  background: #dcede6;
+  color: #3d8b7a;
+}
+
+.status-badge.failed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* 提示信息 */
+.tips-section {
+  padding: 32rpx;
+  margin-top: 16rpx;
+}
+
+.tips-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.tips-item:last-child {
+  margin-bottom: 0;
+}
+
+.tips-item text {
+  font-size: 24rpx;
+  color: #6b7280;
+  margin-left: 12rpx;
+}
+</style>

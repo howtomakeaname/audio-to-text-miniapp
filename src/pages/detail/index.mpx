@@ -1,0 +1,520 @@
+<template>
+  <view class="detail-page" wx:if="{{file}}">
+    <!-- 页面头部 -->
+    <view class="page-header">
+      <view class="header-left" bindtap="goBack">
+        <icon name="chevron-left" size="24" color="#1f2937" />
+      </view>
+      <text class="header-title">转录详情</text>
+      <view class="header-right" bindtap="showActions">
+        <icon name="more" size="24" color="#6b7280" />
+      </view>
+    </view>
+
+    <!-- 文件信息卡片 -->
+    <view class="file-card">
+      <view class="file-icon-large">
+        <icon name="audio" size="48" color="#3d8b7a" />
+      </view>
+      <view class="file-info">
+        <text class="file-name">{{file.originalName}}</text>
+        <view class="file-meta">
+          <text>{{file.durationStr}}</text>
+          <text class="dot">·</text>
+          <text>{{file.sizeStr}}</text>
+          <text class="dot">·</text>
+          <text>{{file.createdAtStr}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 音频播放器 -->
+    <view class="player-card" wx:if="{{file.ossUrl}}">
+      <view class="player-controls">
+        <view class="play-btn {{isPlaying ? 'playing' : ''}}" bindtap="togglePlay">
+          <icon name="{{isPlaying ? 'pause' : 'play'}}" size="32" color="#ffffff" />
+        </view>
+        <view class="progress-section">
+          <slider
+            class="progress-slider"
+            min="0"
+            max="{{duration}}"
+            value="{{currentTime}}"
+            block-size="12"
+            activeColor="#3d8b7a"
+            backgroundColor="#e5e7eb"
+            bindchange="onSliderChange"
+            bindchanging="onSliderChanging"
+          />
+          <view class="time-display">
+            <text class="current">{{currentTimeStr}}</text>
+            <text class="total">{{durationStr}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 转录状态 -->
+    <view class="status-card" wx:if="{{file.transcriptionStatus === 'processing' || file.transcriptionStatus === 'pending'}}">
+      <view class="status-icon processing">
+        <view class="spinner"></view>
+      </view>
+      <view class="status-info">
+        <text class="status-title">正在转录中...</text>
+        <text class="status-desc">预计还需 {{estimatedTime}} 分钟</text>
+      </view>
+    </view>
+
+    <view class="status-card error" wx:if="{{file.transcriptionStatus === 'failed'}}">
+      <view class="status-icon error">
+        <icon name="x" size="24" color="#dc2626" />
+      </view>
+      <view class="status-info">
+        <text class="status-title">转录失败</text>
+        <text class="status-desc">{{file.transcription?.errorMessage || '请重试'}}</text>
+      </view>
+      <view class="retry-btn" bindtap="retryTranscription">
+        <text>重试</text>
+      </view>
+    </view>
+
+    <!-- 转录结果 -->
+    <view class="result-section" wx:if="{{file.transcriptionStatus === 'completed' && file.transcription}}">
+      <!-- 摘要卡片 -->
+      <view class="result-card">
+        <view class="card-header">
+          <icon name="file-text" size="20" color="#3d8b7a" />
+          <text class="card-title">内容摘要</text>
+        </view>
+        <view class="card-content">
+          <text class="summary-text">{{file.transcription.summaryText}}</text>
+        </view>
+        <view class="card-actions">
+          <view class="action-btn" bindtap="copySummary">
+            <icon name="copy" size="16" color="#6b7280" />
+            <text>复制</text>
+          </view>
+          <view class="action-btn" bindtap="shareSummary">
+            <icon name="share" size="16" color="#6b7280" />
+            <text>分享</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 完整转录文本 -->
+      <view class="result-card">
+        <view class="card-header">
+          <icon name="align-left" size="20" color="#3d8b7a" />
+          <text class="card-title">完整转录</text>
+          <view class="word-count">{{wordCount}} 字</view>
+        </view>
+        <view class="card-content">
+          <text class="transcript-text">{{file.transcription.transcriptText}}</text>
+        </view>
+        <view class="card-actions">
+          <view class="action-btn" bindtap="copyTranscript">
+            <icon name="copy" size="16" color="#6b7280" />
+            <text>复制全文</text>
+          </view>
+          <view class="action-btn" bindtap="expandTranscript">
+            <icon name="maximize" size="16" color="#6b7280" />
+            <text>全屏查看</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部占位 -->
+    <view class="bottom-spacer"></view>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar" wx:if="{{file}}">
+    <view class="action-btn secondary" bindtap="deleteFile">
+      <icon name="trash" size="20" color="#dc2626" />
+      <text>删除</text>
+    </view>
+    <view class="action-btn primary" bindtap="reupload" wx:if="{{file.transcriptionStatus === 'failed'}}">
+      <icon name="refresh" size="20" color="#ffffff" />
+      <text>重新转录</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { useFileStore } from '../../stores/file'
+import { formatDuration, formatFileSize, formatTime, formatDate } from '../../utils/format'
+
+createPage({
+  data: {
+    fileId: null,
+    file: null,
+    isPlaying: false,
+    currentTime: 0,
+    duration: 0,
+    currentTimeStr: '0:00',
+    durationStr: '0:00',
+    audioContext: null,
+    estimatedTime: 5,
+    wordCount: 0,
+    pollingTimer: null
+  },
+
+  onLoad(options) {
+    if (options.id) {
+      this.setData({ fileId: parseInt(options.id) })
+      this.loadFileDetail()
+    }
+  },
+
+  onShow() {
+    if (this.data.fileId) {
+      this.loadFileDetail()
+    }
+  },
+
+  onUnload() {
+    this.stopPolling()
+    if (this.data.audioContext) {
+      this.data.audioContext.destroy()
+    }
+  },
+
+  async loadFileDetail() {
+    const fileStore = useFileStore()
+
+    try {
+      const file = await fileStore.fetchFileDetail(this.data.fileId)
+
+      const formattedFile = {
+        ...file,
+        durationStr: formatDuration(file.duration),
+        sizeStr: formatFileSize(file.fileSize),
+        createdAtStr: formatTime(file.createdAt),
+        createdAtFull: formatDate(file.createdAt)
+      }
+
+      // 计算字数
+      const wordCount = file.transcription?.transcriptText?.length || 0
+
+      this.setData({
+        file: formattedFile,
+        duration: file.duration || 0,
+        durationStr: formatDuration(file.duration || 0),
+        wordCount
+      })
+
+      // 如果正在处理，开始轮询
+      if (file.transcriptionStatus === 'processing' || file.transcriptionStatus === 'pending') {
+        this.startPolling()
+      }
+    } catch (error) {
+      console.error('加载文件详情失败', error)
+      wx.showToast({
+        title: '加载失败',
+        icon: 'none'
+      })
+    }
+  },
+
+  startPolling() {
+    this.stopPolling()
+
+    const timer = setInterval(() => {
+      this.loadFileDetail()
+    }, 3000)
+
+    this.setData({ pollingTimer: timer })
+  },
+
+  stopPolling() {
+    if (this.data.pollingTimer) {
+      clearInterval(this.data.pollingTimer)
+      this.setData({ pollingTimer: null })
+    }
+  },
+
+  // 音频播放控制
+  initAudio() {
+    if (this.data.audioContext) {
+      this.data.audioContext.destroy()
+    }
+
+    const audioContext = wx.createInnerAudioContext()
+    audioContext.src = this.data.file.ossUrl
+
+    audioContext.onPlay(() => {
+      this.setData({ isPlaying: true })
+    })
+
+    audioContext.onPause(() => {
+      this.setData({ isPlaying: false })
+    })
+
+    audioContext.onStop(() => {
+      this.setData({ isPlaying: false, currentTime: 0 })
+    })
+
+    audioContext.onEnded(() => {
+      this.setData({ isPlaying: false, currentTime: 0 })
+    })
+
+    audioContext.onTimeUpdate(() => {
+      const currentTime = audioContext.currentTime
+      this.setData({
+        currentTime,
+        currentTimeStr: this.formatTime(currentTime)
+      })
+    })
+
+    audioContext.onError((err) => {
+      console.error('音频播放错误', err)
+      wx.showToast({
+        title: '播放失败',
+        icon: 'none'
+      })
+    })
+
+    this.setData({ audioContext })
+  },
+
+  togglePlay() {
+    if (!this.data.audioContext) {
+      this.initAudio()
+    }
+
+    if (this.data.isPlaying) {
+      this.data.audioContext.pause()
+    } else {
+      this.data.audioContext.play()
+    }
+  },
+
+  onSliderChange(e) {
+    const value = e.detail.value
+    if (this.data.audioContext) {
+      this.data.audioContext.seek(value)
+    }
+  },
+
+  onSliderChanging(e) {
+    const value = e.detail.value
+    this.setData({
+      currentTime: value,
+      currentTimeStr: this.formatTime(value)
+    })
+  },
+
+  formatTime(seconds) {
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  },
+
+  // 复制和分享
+  copySummary() {
+    const summary = this.data.file.transcription?.summaryText
+    if (summary) {
+      wx.setClipboardData({
+        data: summary,
+        success: () => {
+          wx.showToast({ title: '已复制', icon: 'success' })
+        }
+      })
+    }
+  },
+
+  shareSummary() {
+    // 实现分享功能
+    wx.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline']
+    })
+  },
+
+  copyTranscript() {
+    const transcript = this.data.file.transcription?.transcriptText
+    if (transcript) {
+      wx.setClipboardData({
+        data: transcript,
+        success: () => {
+          wx.showToast({ title: '已复制全文', icon: 'success' })
+        }
+      })
+    }
+  },
+
+  expandTranscript() {
+    wx.navigateTo({
+      url: `/pages/transcript/index?id=${this.data.fileId}`
+    })
+  },
+
+  // 操作
+  deleteFile() {
+    wx.showModal({
+      title: '确认删除',
+      content: '删除后无法恢复，是否继续？',
+      confirmColor: '#dc2626',
+      success: (res) => {
+        if (res.confirm) {
+          this.doDelete()
+        }
+      }
+    })
+  },
+
+  async doDelete() {
+    const fileStore = useFileStore()
+
+    try {
+      wx.showLoading({ title: '删除中...' })
+      await fileStore.removeFileById(this.data.fileId)
+      wx.hideLoading()
+      wx.showToast({ title: '已删除', icon: 'success' })
+      setTimeout(() => {
+        wx.navigateBack()
+      }, 1000)
+    } catch (error) {
+      wx.hideLoading()
+      wx.showToast({ title: '删除失败', icon: 'none' })
+    }
+  },
+
+  reupload() {
+    // 重新上传逻辑
+    wx.showToast({ title: '功能开发中', icon: 'none' })
+  },
+
+  retryTranscription() {
+    wx.showToast({ title: '功能开发中', icon: 'none' })
+  },
+
+  goBack() {
+    wx.navigateBack()
+  },
+
+  showActions() {
+    wx.showActionSheet({
+      itemList: ['分享', '重命名', '删除'],
+      itemColor: '#dc2626',
+      success: (res) => {
+        switch (res.tapIndex) {
+          case 0:
+            this.shareSummary()
+            break
+          case 2:
+            this.deleteFile()
+            break
+        }
+      }
+    })
+  }
+})
+</script>
+
+<style>
+.detail-page {
+  min-height: 100vh;
+  background: #f9fafb;
+  padding-bottom: calc(120rpx + env(safe-area-inset-bottom));
+}
+
+/* 页面头部 */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx;
+  background: #ffffff;
+  border-bottom: 1rpx solid #f3f4f6;
+}
+
+.header-left,
+.header-right {
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-left:active,
+.header-right:active {
+  opacity: 0.7;
+}
+
+.header-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* 文件信息卡片 */
+.file-card {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  margin: 24rpx 32rpx;
+  padding: 32rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.file-icon-large {
+  width: 96rpx;
+  height: 96rpx;
+  background: linear-gradient(135deg, #f0f7f4 0%, #dcede6 100%);
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 12rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-meta {
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.file-meta .dot {
+  margin: 0 8rpx;
+}
+
+/* 音频播放器 */
+.player-card {
+  background: #ffffff;
+  margin: 0 32rpx 24rpx;
+  padding: 24rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+}
+
+.play-btn {
+  width: 80rpx;
+ 

@@ -1,0 +1,107 @@
+<template>
+  <view class="tab-bar {{safeAreaClass}}">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="pagePath"
+      class="tab-item {{selected === index ? 'active' : ''}}"
+      bindtap="switchTab"
+      data-index="{{index}}"
+    >
+      <icon
+        name="{{item.icon}}"
+        size="24"
+        color="{{selected === index ? '#3d8b7a' : '#9ca3af'}}"
+      />
+      <text class="tab-text">{{item.text}}</text>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+const tabs = [
+  {
+    pagePath: '/pages/upload/index',
+    text: '上传',
+    icon: 'upload'
+  },
+  {
+    pagePath: '/pages/records/index',
+    text: '记录',
+    icon: 'record'
+  },
+  {
+    pagePath: '/pages/profile/index',
+    text: '我的',
+    icon: 'user'
+  }
+]
+
+createComponent({
+  data: {
+    tabs,
+    selected: 0
+  },
+
+  methods: {
+    switchTab(e) {
+      const index = e.currentTarget.dataset.index
+      const path = this.tabs[index].pagePath
+
+      wx.switchTab({
+        url: path
+      })
+    }
+  }
+})
+</script>
+
+<style>
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(100rpx + env(safe-area-inset-bottom));
+  background: #ffffff;
+  display: flex;
+  border-top: 1rpx solid #e5e7eb;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: env(safe-area-inset-bottom);
+  transition: all 0.2s ease;
+}
+
+.tab-text {
+  font-size: 22rpx;
+  color: #9ca3af;
+  margin-top: 6rpx;
+  transition: color 0.2s ease;
+}
+
+.tab-item.active .tab-text {
+  color: #3d8b7a;
+  font-weight: 500;
+}
+
+.tab-item:active {
+  opacity: 0.7;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "usingComponents": {
+    "icon": "../components/icon"
+  }
+}
+</script>

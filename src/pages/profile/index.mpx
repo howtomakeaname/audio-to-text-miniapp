@@ -1,0 +1,461 @@
+<template>
+  <view class="profile-page">
+    <!-- 用户信息卡片 -->
+    <view class="user-card">
+      <view class="bg-decoration">
+        <view class="circle circle-1"></view>
+        <view class="circle circle-2"></view>
+      </view>
+      <view class="user-content">
+        <view class="avatar-wrapper">
+          <image
+            wx:if="{{userInfo.avatarUrl}}"
+            class="avatar"
+            src="{{userInfo.avatarUrl}}"
+            mode="aspectFill"
+          />
+          <view wx:else class="avatar-placeholder">
+            <icon name="user" size="48" color="#3d8b7a" />
+          </view>
+        </view>
+        <view class="user-info">
+          <text class="nickname">{{userInfo.nickname || '微信用户'}}</text>
+          <text class="user-id">ID: {{userInfo.id}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 统计卡片 -->
+    <view class="stats-section">
+      <view class="stats-card">
+        <view class="stat-item">
+          <text class="stat-value">{{stats.totalFiles}}</text>
+          <text class="stat-label">总文件</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-value">{{stats.completedFiles}}</text>
+          <text class="stat-label">已完成</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-value">{{stats.totalDurationStr}}</text>
+          <text class="stat-label">总时长</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 功能菜单 -->
+    <view class="menu-section">
+      <view class="menu-group">
+        <view class="menu-item" bindtap="goToAbout">
+          <view class="menu-icon about">
+            <icon name="info" size="24" color="#3d8b7a" />
+          </view>
+          <text class="menu-text">关于我们</text>
+          <icon name="chevron-right" size="16" color="#d1d5db" />
+        </view>
+        <view class="menu-item" bindtap="goToHelp">
+          <view class="menu-icon help">
+            <icon name="help-circle" size="24" color="#3d8b7a" />
+          </view>
+          <text class="menu-text">帮助中心</text>
+          <icon name="chevron-right" size="16" color="#d1d5db" />
+        </view>
+        <view class="menu-item" bindtap="contactService">
+          <view class="menu-icon service">
+            <icon name="message-circle" size="24" color="#3d8b7a" />
+          </view>
+          <text class="menu-text">联系客服</text>
+          <icon name="chevron-right" size="16" color="#d1d5db" />
+        </view>
+      </view>
+
+      <view class="menu-group">
+        <view class="menu-item" bindtap="clearCache">
+          <view class="menu-icon cache">
+            <icon name="trash-2" size="24" color="#6b7280" />
+          </view>
+          <text class="menu-text">清理缓存</text>
+          <text class="menu-extra">{{cacheSize}}</text>
+          <icon name="chevron-right" size="16" color="#d1d5db" />
+        </view>
+        <view class="menu-item" bindtap="checkUpdate">
+          <view class="menu-icon update">
+            <icon name="refresh-cw" size="24" color="#6b7280" />
+          </view>
+          <text class="menu-text">检查更新</text>
+          <text class="menu-extra" wx:if="{{hasUpdate}}">有新版本</text>
+          <icon name="chevron-right" size="16" color="#d1d5db" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 退出登录 -->
+    <view class="logout-section">
+      <view class="logout-btn" bindtap="logout">
+        <text>退出登录</text>
+      </view>
+    </view>
+
+    <!-- 底部占位 -->
+    <view class="bottom-spacer"></view>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import { useUserStore } from '../../stores/user'
+import { useFileStore } from '../../stores/file'
+import { formatDuration } from '../../utils/format'
+
+createPage({
+  data: {
+    userInfo: {},
+    stats: {
+      totalFiles: 0,
+      completedFiles: 0,
+      totalDuration: 0,
+      totalDurationStr: '0:00'
+    },
+    cacheSize: '0MB',
+    hasUpdate: false
+  },
+
+  onLoad() {
+    this.loadUserInfo()
+    this.loadStats()
+    this.checkCache()
+  },
+
+  onShow() {
+    this.loadStats()
+  },
+
+  loadUserInfo() {
+    const userStore = useUserStore()
+    this.setData({
+      userInfo: userStore.userInfo || {}
+    })
+  },
+
+  async loadStats() {
+    const fileStore = useFileStore()
+
+    try {
+      const files = fileStore.files
+
+      const totalFiles = files.length
+      const completedFiles = files.filter(f => f.transcriptionStatus === 'completed').length
+      const totalDuration = files.reduce((sum, f) => sum + (f.duration || 0), 0)
+
+      this.setData({
+        stats: {
+          totalFiles,
+          completedFiles,
+          totalDuration,
+          totalDurationStr: formatDuration(totalDuration)
+        }
+      })
+    } catch (error) {
+      console.error('加载统计数据失败', error)
+    }
+  },
+
+  checkCache() {
+    // 模拟获取缓存大小
+    this.setData({ cacheSize: '2.5MB' })
+  },
+
+  goToAbout() {
+    wx.navigateTo({ url: '/pages/about/index' })
+  },
+
+  goToHelp() {
+    wx.navigateTo({ url: '/pages/help/index' })
+  },
+
+  contactService() {
+    wx.showModal({
+      title: '联系客服',
+      content: '客服电话：400-xxx-xxxx\n工作时间：9:00-18:00',
+      showCancel: false
+    })
+  },
+
+  clearCache() {
+    wx.showModal({
+      title: '清理缓存',
+      content: '确定要清理缓存吗？',
+      success: (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '清理中...' })
+          setTimeout(() => {
+            wx.hideLoading()
+            this.setData({ cacheSize: '0MB' })
+            wx.showToast({ title: '清理完成', icon: 'success' })
+          }, 1000)
+        }
+      }
+    })
+  },
+
+  checkUpdate() {
+    wx.showLoading({ title: '检查中...' })
+    setTimeout(() => {
+      wx.hideLoading()
+      wx.showModal({
+        title: '已是最新版本',
+        content: '当前版本 v1.0.0',
+        showCancel: false
+      })
+    }, 1000)
+  },
+
+  logout() {
+    wx.showModal({
+      title: '退出登录',
+      content: '确定要退出登录吗？',
+      success: (res) => {
+        if (res.confirm) {
+          const userStore = useUserStore()
+          userStore.logout()
+          wx.reLaunch({
+            url: '/pages/login/index'
+          })
+        }
+      }
+    })
+  }
+})
+</script>
+
+<style>
+.profile-page {
+  min-height: 100vh;
+  background: #f9fafb;
+  padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
+}
+
+/* 用户信息卡片 */
+.user-card {
+  position: relative;
+  background: linear-gradient(135deg, #3d8b7a 0%, #2d6f61 100%);
+  padding: 48rpx 32rpx;
+  overflow: hidden;
+}
+
+.bg-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.circle-1 {
+  width: 400rpx;
+  height: 400rpx;
+  top: -100rpx;
+  right: -100rpx;
+}
+
+.circle-2 {
+  width: 300rpx;
+  height: 300rpx;
+  bottom: -50rpx;
+  left: -50rpx;
+}
+
+.user-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+}
+
+.avatar-wrapper {
+  margin-right: 32rpx;
+}
+
+.avatar {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 50%;
+  border: 4rpx solid rgba(255, 255, 255, 0.3);
+}
+
+.avatar-placeholder {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.nickname {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8rpx;
+}
+
+.user-id {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 统计卡片 */
+.stats-section {
+  padding: 0 32rpx;
+  margin-top: -32rpx;
+  position: relative;
+  z-index: 2;
+}
+
+.stats-card {
+  display: flex;
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.stat-divider {
+  width: 1rpx;
+  background: #f3f4f6;
+  margin: 0 16rpx;
+}
+
+/* 菜单 */
+.menu-section {
+  padding: 32rpx;
+}
+
+.menu-group {
+  background: #ffffff;
+  border-radius: 24rpx;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 32rpx;
+  border-bottom: 1rpx solid #f9fafb;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item:active {
+  background: #f9fafb;
+}
+
+.menu-icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+}
+
+.menu-icon.about {
+  background: #f0f7f4;
+}
+
+.menu-icon.help {
+  background: #dbeafe;
+}
+
+.menu-icon.service {
+  background: #fce7f3;
+}
+
+.menu-icon.cache {
+  background: #f3f4f6;
+}
+
+.menu-icon.update {
+  background: #f3f4f6;
+}
+
+.menu-text {
+  flex: 1;
+  font-size: 30rpx;
+  color: #1f2937;
+}
+
+.menu-extra {
+  font-size: 26rpx;
+  color: #9ca3af;
+  margin-right: 12rpx;
+}
+
+/* 退出登录 */
+.logout-section {
+  padding: 0 32rpx 48rpx;
+}
+
+.logout-btn {
+  background: #ffffff;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  text-align: center;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.logout-btn:active {
+  background: #f9fafb;
+}
+
+.logout-btn text {
+  font-size: 30rpx;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+/* 底部占位 */
+.bottom-spacer {
+  height: 32rpx;
+}
+</style>

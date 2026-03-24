@@ -1,0 +1,42 @@
+<template>
+  <view class="index-page">
+    <text>正在加载...</text>
+  </view>
+</template>
+
+<script>
+import { createPage } from '@mpxjs/core'
+import mpx from '@mpxjs/core'
+
+createPage({
+  onLoad() {
+    console.log('Index page onLoad')
+    // 检查登录状态
+    const token = mpx.getStorageSync('token')
+    console.log('Login token:', token)
+    
+    if (token) {
+      // 已登录，跳转到上传页
+      mpx.switchTab({
+        url: '/pages/upload/index',
+        success() { console.log('switchTab success') },
+        fail(err) { console.error('switchTab fail', err) }
+      })
+    } else {
+      // 未登录，跳转到登录页
+      mpx.redirectTo({
+        url: '/pages/login/index',
+        success() { console.log('redirectTo success') },
+        fail(err) { console.error('redirectTo fail', err) }
+      })
+    }
+  }
+})
+</script>
+
+<style>
+.index-page {
+  min-height: 100vh;
+  background: #f9fafb;
+}
+</style>
