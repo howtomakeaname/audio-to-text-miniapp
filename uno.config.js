@@ -1,5 +1,6 @@
 const { defineConfig } = require('unocss')
 const presetMpx = require('@mpxjs/unocss-base')
+const presetIcons = require('@unocss/preset-icons').default
 
 // 典雅中国风绿色主题色
 const themeColors = {
@@ -60,7 +61,15 @@ const themeColors = {
 module.exports = defineConfig({
   include: [/\.mpx($|\?)/],
   presets: [
-    presetMpx()
+    presetMpx(),
+    presetIcons({
+      scale: 1.2,
+      warn: true,
+      extraProperties: {
+        'display': 'inline-block',
+        'vertical-align': 'middle'
+      }
+    })
   ],
   theme: {
     colors: themeColors,
@@ -97,6 +106,35 @@ module.exports = defineConfig({
     ['status-processing', 'text-amber-500 bg-amber-50 px-2 py-1 rounded-full text-xs font-medium'],
     ['status-completed', 'text-primary-600 bg-primary-50 px-2 py-1 rounded-full text-xs font-medium'],
     ['status-failed', 'text-red-500 bg-red-50 px-2 py-1 rounded-full text-xs font-medium'],
+  ],
+  safelist: [
+    'i-lucide-upload',
+    'i-lucide-mic',
+    'i-lucide-user',
+    'i-lucide-play',
+    'i-lucide-pause',
+    'i-lucide-chevron-left',
+    'i-lucide-chevron-right',
+    'i-lucide-check',
+    'i-lucide-x',
+    'i-lucide-trash',
+    'i-lucide-trash-2',
+    'i-lucide-refresh-cw',
+    'i-lucide-headphones',
+    'i-lucide-message-square',
+    'i-lucide-info',
+    'i-lucide-help-circle',
+    'i-lucide-message-circle',
+    'i-lucide-more-horizontal',
+    'i-lucide-file-text',
+    'i-lucide-file',
+    'i-lucide-copy',
+    'i-lucide-share-2',
+    'i-lucide-align-left',
+    'i-lucide-maximize',
+    'i-lucide-settings',
+    'i-lucide-square',
+    'i-lucide-circle'
   ],
   rules: [
     // 自定义规则

@@ -1,9 +1,6 @@
 import mpx from '@mpxjs/core'
-import mpxFetch from '@mpxjs/fetch'
 
-mpx.use(mpxFetch)
-
-const BASE_URL = process.env.BASE_URL || 'https://api.example.com/v1'
+const BASE_URL = (process.env.BASE_URL && process.env.BASE_URL !== '/') ? process.env.BASE_URL : 'http://localhost:3000'
 
 // 获取存储的token
 const getToken = () => {
@@ -40,7 +37,7 @@ const request = (options = {}) => {
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {}
   
   return new Promise((resolve, reject) => {
-    mpx.fetch({
+    mpx.request({
       url: `${BASE_URL}${url}`,
       method,
       data,
@@ -95,20 +92,30 @@ const request = (options = {}) => {
 // 上传文件到OSS
 const uploadToOSS = (filePath, formData, ossEndpoint) => {
   return new Promise((resolve, reject) => {
+    // 拷贝一份formData避免修改原对象
+    const data = { ...formData };
+    
+    // 如果存在 policy 字段，确保其它参数和 policy 一起发送，不要漏掉 file
+    // file 必须是表单中的最后一个字段，mpx.uploadFile 中通过 name 指定
+    
+    // 为了防止签名不匹配，我们需要确保 x-oss 相关的请求字段顺序或内容符合 OSS 官方要求，
+    // 特别是上传时的 content-type 要和签名时一致（如果有的话），以及确保 filePath 对应的 key 等字段都在 formData 中
+    
     mpx.uploadFile({
       url: ossEndpoint,
       filePath,
-      name: 'file',
-      formData,
+      name: 'file', // OSS 要求文件字段名为 file，且必须放在表单最后
+      formData: data,
       success: (res) => {
-        if (res.statusCode === 200 || res.statusCode === 204) {
+        // OSS 默认返回 204 No Content，或者根据 success_action_status 返回 200
+        if (res.statusCode >= 200 && res.statusCode < 300) {
           resolve(res)
         } else {
-          reject({ code: res.statusCode, message: '上传失败' })
+          reject({ code: res.statusCode, message: '上传失败', data: res.data })
         }
       },
       fail: (err) => {
-        reject({ code: -1, message: '上传失败', error: err })
+        reject({ code: -1, message: '上传网络错误', error: err })
       }
     })
   })

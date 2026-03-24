@@ -1,65 +1,39 @@
 <template>
-  <view class="icon-wrapper" style="{{wrapperStyle}}">
-    <svg
-      class="icon-svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      style="{{svgStyle}}"
-    >
-      <block wx:if="{{name === 'upload'}}">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-        <polyline points="17 8 12 3 7 8"/>
-        <line x1="12" y1="3" x2="12" y2="15"/>
-      </block>
-      <block wx:elif="{{name === 'record'}}">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
-      </block>
-      <block wx:elif="{{name === 'user'}}">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </block>
-      <block wx:elif="{{name === 'play'}}">
-        <polygon points="5 3 19 12 5 21 5 3"/>
-      </block>
-      <block wx:elif="{{name === 'pause'}}">
-        <rect x="6" y="4" width="4" height="16"/>
-        <rect x="14" y="4" width="4" height="16"/>
-      </block>
-      <block wx:elif="{{name === 'chevron-right'}}">
-        <polyline points="9 18 15 12 9 6"/>
-      </block>
-      <block wx:elif="{{name === 'check'}}">
-        <polyline points="20 6 9 17 4 12"/>
-      </block>
-      <block wx:elif="{{name === 'x'}}">
-        <line x1="18" y1="6" x2="6" y2="18"/>
-        <line x1="6" y1="6" x2="18" y2="18"/>
-      </block>
-      <block wx:elif="{{name === 'trash'}}">
-        <polyline points="3 6 5 6 21 6"/>
-        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-      </block>
-      <block wx:elif="{{name === 'refresh'}}">
-        <polyline points="23 4 23 10 17 10"/>
-        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-      </block>
-      <block wx:else>
-        <circle cx="12" cy="12" r="10"/>
-      </block>
-    </svg>
-  </view>
+  <view class="icon-wrapper {{ iconClass }}" style="{{wrapperStyle}}"></view>
 </template>
 
 <script>
 import { createComponent, computed } from '@mpxjs/core'
+
+const iconMap = {
+  'upload': 'i-lucide-upload',
+  'record': 'i-lucide-mic',
+  'user': 'i-lucide-user',
+  'play': 'i-lucide-play',
+  'pause': 'i-lucide-pause',
+  'chevron-left': 'i-lucide-chevron-left',
+  'chevron-right': 'i-lucide-chevron-right',
+  'check': 'i-lucide-check',
+  'x': 'i-lucide-x',
+  'trash': 'i-lucide-trash',
+  'trash-2': 'i-lucide-trash-2',
+  'refresh': 'i-lucide-refresh-cw',
+  'refresh-cw': 'i-lucide-refresh-cw',
+  'audio': 'i-lucide-headphones',
+  'message': 'i-lucide-message-square',
+  'info': 'i-lucide-info',
+  'help-circle': 'i-lucide-help-circle',
+  'message-circle': 'i-lucide-message-circle',
+  'more': 'i-lucide-more-horizontal',
+  'file-text': 'i-lucide-file-text',
+  'file': 'i-lucide-file',
+  'copy': 'i-lucide-copy',
+  'share': 'i-lucide-share-2',
+  'align-left': 'i-lucide-align-left',
+  'maximize': 'i-lucide-maximize',
+  'settings': 'i-lucide-settings',
+  'stop': 'i-lucide-square'
+}
 
 createComponent({
   props: {
@@ -77,17 +51,17 @@ createComponent({
     }
   },
   setup(props) {
-    const wrapperStyle = computed(() => {
-      return `width: ${props.size}px; height: ${props.size}px; color: ${props.color}; display: inline-flex; align-items: center; justify-content: center;`
+    const iconClass = computed(() => {
+      return iconMap[props.name] || 'i-lucide-circle'
     })
 
-    const svgStyle = computed(() => {
-      return `width: 100%; height: 100%;`
+    const wrapperStyle = computed(() => {
+      return `width: ${props.size}px; height: ${props.size}px; color: ${props.color}; font-size: ${props.size}px; display: inline-flex; align-items: center; justify-content: center;`
     })
 
     return {
-      wrapperStyle,
-      svgStyle
+      iconClass,
+      wrapperStyle
     }
   }
 })
@@ -97,8 +71,10 @@ createComponent({
 .icon-wrapper {
   flex-shrink: 0;
 }
-
-.icon-svg {
-  display: block;
-}
 </style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>
