@@ -29,7 +29,7 @@ const tabs = [
   {
     pagePath: '/pages/records/index',
     text: '记录',
-    icon: 'record'
+    icon: 'file-text'
   },
   {
     pagePath: '/pages/profile/index',

@@ -82,18 +82,13 @@ createComponent({
 }
 
 .spinner {
-  width: 40rpx;
-  height: 40rpx;
-  border: 4rpx solid #d1fae5;
-  border-top-color: #3d8b7a;
+  width: 44rpx;
+  height: 44rpx;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  background: conic-gradient(from 180deg at 50% 50%, rgba(61, 139, 122, 0) 0deg, rgba(61, 139, 122, 0.1) 140deg, rgba(61, 139, 122, 0.4) 220deg, rgba(61, 139, 122, 1) 360deg);
+  -webkit-mask: radial-gradient(transparent 16rpx, #000 17rpx);
+  mask: radial-gradient(transparent 16rpx, #000 17rpx);
+  animation: spin 0.9s steps(12, end) infinite;
 }
 
 .status-info {

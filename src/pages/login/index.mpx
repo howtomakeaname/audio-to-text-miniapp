@@ -249,18 +249,13 @@ createPage({
 }
 
 .loading-spinner {
-  width: 32rpx;
-  height: 32rpx;
-  border: 3rpx solid rgba(255, 255, 255, 0.3);
-  border-top-color: #ffffff;
+  width: 38rpx;
+  height: 38rpx;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  background: conic-gradient(from 180deg at 50% 50%, rgba(255, 255, 255, 0) 0deg, rgba(255, 255, 255, 0.1) 140deg, rgba(255, 255, 255, 0.4) 220deg, rgba(255, 255, 255, 1) 360deg);
+  -webkit-mask: radial-gradient(transparent 14rpx, #000 15rpx);
+  mask: radial-gradient(transparent 14rpx, #000 15rpx);
+  animation: spin 0.9s steps(12, end) infinite;
 }
 
 /* 隐私提示 */

@@ -766,7 +766,8 @@ createPage({
     "icon": "../../components/icon",
     "file-meta": "./components/file-meta",
     "audio-player": "./components/audio-player",
-    "status-card": "./components/status-card"
+    "status-card": "./components/status-card",
+    "mp-html": "mp-html"
   }
 }
 </script>
