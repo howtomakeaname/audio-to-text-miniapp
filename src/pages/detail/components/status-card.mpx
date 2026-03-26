@@ -50,12 +50,12 @@ createComponent({
 <style>
 .status-card {
   background: #ffffff;
-  border-radius: 16rpx;
+  border-radius: 24rpx;
   padding: 40rpx;
-  margin: 0 30rpx 20rpx;
+  margin-bottom: 24rpx;
   display: flex;
   align-items: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
 .status-card.error {
