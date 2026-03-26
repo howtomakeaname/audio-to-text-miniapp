@@ -1,18 +1,15 @@
 <template>
-  <view class="file-card">
-    <view class="file-icon-large">
-      <icon name="audio" size="48" color="#3d8b7a" />
-    </view>
-    <view class="file-info">
-      <text class="file-name">{{file.originalName}}</text>
-      <view class="file-meta">
-        <text>{{file.durationStr}}</text>
-        <text class="dot">·</text>
-        <text>{{file.sizeStr}}</text>
-        <text class="dot">·</text>
-        <text>{{file.createdAtStr}}</text>
-      </view>
-    </view>
+  <view class="file-card-wrapper">
+    <ui-list>
+      <ui-list-item
+        title="{{file.originalName}}"
+        desc="{{file.durationStr}} · {{file.sizeStr}} · {{file.createdAtStr}}"
+        icon="audio"
+        iconSize="32"
+        iconColor="#3d8b7a"
+        border="{{false}}"
+      />
+    </ui-list>
   </view>
 </template>
 
@@ -30,47 +27,8 @@ createComponent({
 </script>
 
 <style>
-.file-card {
-  background: #ffffff;
-  padding: 40rpx;
-  margin-bottom: 16rpx;
-  display: flex;
-  align-items: center;
-}
-
-.file-icon-large {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 24rpx;
-  flex-shrink: 0;
-}
-
-.file-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.file-name {
-  font-size: 32rpx;
-  font-weight: 500;
-  color: #1f2937;
-  margin-bottom: 8rpx;
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.file-meta {
-  font-size: 24rpx;
-  color: #6b7280;
-  display: flex;
-  align-items: center;
-}
-
-.dot {
-  margin: 0 8rpx;
+.file-card-wrapper {
+  margin: 24rpx 32rpx 32rpx;
 }
 </style>
 
@@ -78,7 +36,9 @@ createComponent({
 {
   "component": true,
   "usingComponents": {
-    "icon": "../../../components/icon"
+    "icon": "../../../components/icon",
+    "ui-list": "../../../components/ui/ui-list",
+    "ui-list-item": "../../../components/ui/ui-list-item"
   }
 }
 </script>

@@ -2,7 +2,7 @@
   <view class="player-card" wx:if="{{playUrl}}">
     <view class="player-controls">
       <view class="play-btn {{isPlaying ? 'playing' : ''}}" bindtap="handleTogglePlay">
-        <icon name="{{isPlaying ? 'pause' : 'play'}}" size="32" color="#ffffff" />
+        <icon name="{{isPlaying ? 'pause' : 'play'}}" size="28" color="#3d8b7a" />
       </view>
       <view class="progress-section">
         <slider
@@ -76,11 +76,14 @@ createComponent({
 <style>
 .player-card {
   background: #ffffff;
-  padding: 30rpx 40rpx;
-  margin-bottom: 16rpx;
+  padding: 32rpx;
+  margin: 0 32rpx 32rpx;
+  border-radius: 20rpx;
   position: sticky;
-  top: 0;
+  /* 避开自定义导航栏 (动态计算的高度) 外加一个小空隙 (16rpx) */
+  top: calc(var(--nav-height, calc(88rpx + env(safe-area-inset-top))) + 16rpx);
   z-index: 10;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
 }
 
 .player-controls {
@@ -91,24 +94,23 @@ createComponent({
 .play-btn {
   width: 80rpx;
   height: 80rpx;
-  background: #10b981;
+  background: #f1f5f9;
   border-radius: 40rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 24rpx;
   flex-shrink: 0;
-  box-shadow: 0 4rpx 12rpx rgba(16, 185, 129, 0.3);
   transition: all 0.2s;
 }
 
 .play-btn:active {
   transform: scale(0.95);
+  background: #e2e8f0;
 }
 
 .play-btn.playing {
-  background: #ef4444;
-  box-shadow: 0 4rpx 12rpx rgba(239, 68, 68, 0.3);
+  background: #e0f2fe;
 }
 
 .progress-section {

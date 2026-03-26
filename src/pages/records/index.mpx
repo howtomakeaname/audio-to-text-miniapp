@@ -1,5 +1,5 @@
 <template>
-  <view class="records-page">
+  <view class="records-page" style="--nav-height: {{navBarHeight}}px; --status-bar-height: {{statusBarHeight}}px;">
     <view class="fixed-top-wrap">
       <!-- iOS 18 大标题风格页面头部 -->
       <view class="page-header">
@@ -78,12 +78,36 @@ createPage({
     loading: false,
     hasMore: true,
     total: 0,
-    page: 1
+    page: 1,
+    statusBarHeight: 20,
+    navBarHeight: 64
   },
 
   onLoad() {
+    this.initSystemInfo()
     this.checkLogin()
     this.loadFileList()
+  },
+
+  initSystemInfo() {
+    const sysInfo = wx.getSystemInfoSync()
+    const statusBarHeight = sysInfo.statusBarHeight || 20
+    let menuBtn = null
+    try {
+      menuBtn = wx.getMenuButtonBoundingClientRect()
+    } catch(e) {}
+
+    let navBarHeight
+    if (menuBtn && menuBtn.top) {
+      navBarHeight = (menuBtn.top - statusBarHeight) * 2 + menuBtn.height + statusBarHeight
+    } else {
+      navBarHeight = statusBarHeight + 44
+    }
+
+    this.setData({
+      statusBarHeight,
+      navBarHeight
+    })
   },
 
   onShow() {
@@ -209,9 +233,9 @@ createPage({
   background: #F2F2F7;
 }
 
-/* iOS 18 大标题风格 */
+/* iOS 18 大标题风格，利用动态计算的高精度导航栏高度补回原生占位，保持原汁原味的留白 */
 .page-header {
-  padding: 48rpx 32rpx 24rpx;
+  padding: calc(var(--nav-height, 88px) + 48rpx) 32rpx 24rpx;
 }
 
 .page-title {
@@ -320,8 +344,7 @@ createPage({
 <script type="application/json">
 {
   "navigationBarTitleText": "",
-  "navigationBarBackgroundColor": "#F2F2F7",
-  "navigationBarTextStyle": "black",
+  "navigationStyle": "custom",
   "usingComponents": {
     "ui-tabs": "../../components/ui/ui-tabs",
     "ui-list": "../../components/ui/ui-list",

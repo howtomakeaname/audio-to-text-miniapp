@@ -1,5 +1,17 @@
 <template>
-  <view class="detail-page" wx:if="{{file}}">
+  <view class="detail-page" wx:if="{{file}}" style="--nav-height: {{navBarHeight}}px; --status-bar-height: {{statusBarHeight}}px; --capsule-width: {{capsuleWidth}}px;">
+
+    <!-- 自定义带有标题的导航栏，包含状态栏安全区域占位 -->
+    <view class="custom-nav-bar">
+      <view class="nav-bar-inner">
+        <view class="back-btn" bindtap="goBack">
+          <icon name="chevron-left" size="24" color="#1f2937" />
+          <text>返回</text>
+        </view>
+        <view class="nav-title">详情</view>
+        <view class="right-placeholder"></view>
+      </view>
+    </view>
 
     <!-- 文件信息卡片 -->
     <view class="content-wrapper">
@@ -62,16 +74,11 @@
             </view>
             <text class="card-title">完整转录</text>
             <view class="text-switch" wx:if="{{file.transcription.polishedText}}">
-              <view 
-                class="switch-btn {{!showPolished ? 'active' : ''}}"
-                bindtap="togglePolished"
-                data-type="original"
-              >原文</view>
-              <view 
-                class="switch-btn {{showPolished ? 'active' : ''}}"
-                bindtap="togglePolished"
-                data-type="polished"
-              >润色后</view>
+              <ui-segment 
+                items="{{ [{label: '原文', value: 'original'}, {label: '润色后', value: 'polished'}] }}" 
+                value="{{showPolished ? 'polished' : 'original'}}" 
+                bindchange="onPolishedChange" 
+              />
             </view>
             <view class="word-count">{{wordCount}} 字</view>
           </view>
@@ -100,13 +107,11 @@
 
   <!-- 底部操作栏 -->
   <view class="bottom-bar" wx:if="{{file}}">
-    <view class="action-btn delete" bindtap="deleteFile">
-      <icon name="trash-2" size="20" color="#dc2626" />
-      <text>删除</text>
+    <view class="btn-wrap">
+      <ui-button block type="danger" bind:click="deleteFile">删除</ui-button>
     </view>
-    <view class="action-btn primary" bindtap="reupload" wx:if="{{file.transcriptionStatus === 'failed'}}">
-      <icon name="refresh-cw" size="20" color="#ffffff" />
-      <text>重新转录</text>
+    <view class="btn-wrap" wx:if="{{file.transcriptionStatus === 'failed'}}">
+      <ui-button block type="primary" bind:click="reupload">重新转录</ui-button>
     </view>
   </view>
 </template>
@@ -442,8 +447,8 @@ createPage({
   },
 
   // 切换原文和润色
-  togglePolished(e) {
-    const type = e.currentTarget.dataset.type
+  onPolishedChange(e) {
+    const type = e.detail
     const showPolished = type === 'polished'
     const textKey = showPolished ? 'polishedText' : 'transcriptText'
     const wordCount = this.data.file?.transcription?.[textKey]?.length || 0
@@ -556,10 +561,65 @@ createPage({
 </script>
 
 <style>
+/* 自定义导航栏（包含顶部的系统安全区域） */
+.custom-nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(242, 242, 247, 0.85); /* 半透明高斯模糊背景 */
+  backdrop-filter: blur(20px);
+  padding-top: var(--status-bar-height, env(safe-area-inset-top));
+  height: var(--nav-height, calc(88rpx + env(safe-area-inset-top)));
+  box-sizing: border-box;
+}
+
+.nav-bar-inner {
+  height: calc(var(--nav-height, calc(88rpx + env(safe-area-inset-top))) - var(--status-bar-height, env(safe-area-inset-top)));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  padding: 0 32rpx;
+  height: 100%;
+  position: relative;
+  z-index: 2;
+  width: calc(var(--capsule-width, 87px) + 32rpx); /* 根据胶囊宽度自适应推算对称边界 */
+  box-sizing: border-box;
+}
+
+.back-btn text {
+  font-size: 34rpx;
+  color: #1f2937;
+  margin-left: 8rpx;
+  font-weight: 500;
+}
+
+.nav-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #000000;
+  z-index: 1;
+}
+
+.right-placeholder {
+  width: calc(var(--capsule-width, 87px) + 32rpx); /* 动态左右对称占位，保证标题100%剧中华 */
+}
+
 /* 页面基础样式 */
 .detail-page {
   min-height: 100vh;
-  background: #f9fafb;
+  background: #F2F2F7; /* iOS 18 System Background */
   padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
 }
 
@@ -613,9 +673,9 @@ createPage({
   color: #ffffff;
 }
 
-/* 内容区域 */
+/* 内容区域 - 为自定义导航栏留出顶部间距 */
 .content-wrapper {
-  padding: 0 0 24rpx;
+  padding: calc(var(--nav-height, calc(88rpx + env(safe-area-inset-top))) + 24rpx) 0 24rpx;
 }
 
 /* 转录结果区域 */
@@ -626,8 +686,9 @@ createPage({
 /* 结果卡片 */
 .result-card {
   background: #ffffff;
-  padding: 32rpx 40rpx;
-  margin-bottom: 16rpx;
+  padding: 32rpx;
+  margin: 0 32rpx 32rpx;
+  border-radius: 20rpx;
 }
 
 .card-header {
@@ -653,27 +714,7 @@ createPage({
 .text-switch {
   display: flex;
   align-items: center;
-  gap: 4rpx;
   margin-right: 16rpx;
-  background: #f1f5f9;
-  padding: 6rpx;
-  border-radius: 12rpx;
-}
-
-.switch-btn {
-  font-size: 24rpx;
-  padding: 8rpx 20rpx;
-  border-radius: 10rpx;
-  color: #64748b;
-  font-weight: 500;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.switch-btn.active {
-  background: #ffffff;
-  color: #3d8b7a;
-  font-weight: 600;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }
 
 .word-count {
@@ -741,56 +782,33 @@ createPage({
   bottom: 0;
   left: 0;
   right: 0;
-  background: #ffffff;
+  background: rgba(242, 242, 247, 0.8);
+  backdrop-filter: blur(20px);
   padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 24rpx;
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 -1rpx 0 rgba(0, 0, 0, 0.1);
 }
 
-.bottom-bar .action-btn {
+.bottom-bar .btn-wrap {
   flex: 1;
-  justify-content: center;
-  padding: 24rpx 0;
-  border-radius: 16rpx;
-}
-
-.bottom-bar .action-btn.delete {
-  background: #fef2f2;
-  border: 2rpx solid #fecaca;
-}
-
-.bottom-bar .action-btn.delete text {
-  color: #dc2626;
-  font-weight: 500;
-}
-
-.bottom-bar .action-btn.primary {
-  background: #3d8b7a;
-  box-shadow: 0 4rpx 12rpx rgba(61, 139, 122, 0.3);
-}
-
-.bottom-bar .action-btn.primary:active {
-  opacity: 0.9;
-  transform: scale(0.98);
-}
-
-.bottom-bar .action-btn.primary text {
-  color: #ffffff;
-  font-weight: 500;
 }
 </style>
 
 <script type="application/json">
 {
+  "navigationBarTitleText": "详情",
+  "navigationStyle": "custom",
   "usingComponents": {
     "icon": "../../components/icon",
     "file-meta": "./components/file-meta",
     "audio-player": "./components/audio-player",
     "status-card": "./components/status-card",
-    "mp-html": "mp-html"
+    "mp-html": "mp-html",
+    "ui-button": "../../components/ui/ui-button",
+    "ui-segment": "../../components/ui/ui-segment"
   }
 }
 </script>

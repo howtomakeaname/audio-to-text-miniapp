@@ -75,8 +75,9 @@ createComponent({
 <style>
 .status-card {
   background: #ffffff;
-  padding: 40rpx;
-  margin-bottom: 16rpx;
+  padding: 32rpx;
+  margin: 0 32rpx 32rpx;
+  border-radius: 20rpx;
   display: flex;
   align-items: center;
 }
