@@ -28,9 +28,9 @@
       />
 
       <!-- 转录结果 -->
-      <view class="result-section" wx:if="{{file.transcriptionStatus === 'completed' && file.transcription}}">
+      <view class="result-section" wx:if="{{file.transcription}}">
         <!-- 摘要卡片 -->
-        <view class="result-card">
+        <view class="result-card" wx:if="{{file.transcription.summaryText}}">
           <view class="card-header">
             <view class="header-icon">
               <icon name="file-text" size="20" color="#3d8b7a" />
@@ -55,7 +55,7 @@
         </view>
 
         <!-- 完整转录文本 -->
-        <view class="result-card">
+        <view class="result-card" wx:if="{{file.transcription.transcriptText}}">
           <view class="card-header">
             <view class="header-icon">
               <icon name="align-left" size="20" color="#3d8b7a" />
@@ -83,7 +83,7 @@
           <view class="card-actions">
             <view class="action-btn" bindtap="copyTranscript">
               <icon name="copy" size="16" color="#6b7280" />
-              <text>复制全文</text>
+              <text>复制</text>
             </view>
             <view class="action-btn" bindtap="expandTranscript">
               <icon name="maximize" size="16" color="#6b7280" />
@@ -115,6 +115,7 @@
 import { createPage } from '@mpxjs/core'
 import { useFileStore } from '../../stores/file'
 import { getAudioPlayUrl, refreshAudioPlayUrl } from '../../api/file'
+import { getTranscriptionStatus } from '../../api/transcription'
 import { formatDuration, formatFileSize, formatTime, formatDate } from '../../utils/format'
 import { marked } from 'marked'
 
@@ -293,8 +294,36 @@ createPage({
   startPolling() {
     this.stopPolling()
 
-    const timer = setInterval(() => {
-      this.loadFileDetail()
+    const timer = setInterval(async () => {
+      if (this.data.file?.transcription?.id) {
+        try {
+          const res = await getTranscriptionStatus(this.data.file.transcription.id)
+          if ((res.code === 200 || res.code === 0) && res.data) {
+            const newTranscription = res.data;
+            const updatedFile = {
+              ...this.data.file,
+              transcriptionStatus: newTranscription.status,
+              transcription: newTranscription
+            }
+            
+            const textKey = this.data.showPolished ? 'polishedText' : 'transcriptText'
+            const wordCount = newTranscription[textKey]?.length || 0
+            
+            this.setData({
+              file: updatedFile,
+              wordCount
+            })
+            
+            if (newTranscription.status === 'completed' || newTranscription.status === 'failed') {
+              this.stopPolling()
+            }
+          }
+        } catch (e) {
+          console.error('Polling transcription failed', e)
+        }
+      } else {
+        this.loadFileDetail()
+      }
     }, 3000)
 
     this.setData({ pollingTimer: timer })
@@ -541,7 +570,7 @@ createPage({
 }
 
 .header-bg {
-  background: linear-gradient(135deg, #3d8b7a 0%, #2d6f61 100%);
+  background: linear-gradient(180deg, #3d8b7a 0%, #2d6f61 100%);
   border-radius: 0 0 32rpx 32rpx;
   box-shadow: 0 4rpx 20rpx rgba(61, 139, 122, 0.3);
 }
@@ -608,10 +637,6 @@ createPage({
 }
 
 .header-icon {
-  width: 40rpx;
-  height: 40rpx;
-  background: #f0f7f4;
-  border-radius: 10rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -743,7 +768,7 @@ createPage({
 }
 
 .bottom-bar .action-btn.primary {
-  background: linear-gradient(135deg, #3d8b7a 0%, #2d6f61 100%);
+  background: #3d8b7a;
   box-shadow: 0 4rpx 12rpx rgba(61, 139, 122, 0.3);
 }
 

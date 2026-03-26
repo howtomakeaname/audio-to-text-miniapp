@@ -5,8 +5,8 @@
         <view class="spinner"></view>
       </view>
       <view class="status-info">
-        <text class="status-title">正在转录中...</text>
-        <text class="status-desc">预计还需 {{estimatedTime}} 分钟</text>
+        <text class="status-title">{{statusTitle}}</text>
+        <text class="status-desc">{{progressText}}</text>
       </view>
     </view>
 
@@ -39,6 +39,31 @@ createComponent({
       value: 0
     }
   },
+  computed: {
+    statusTitle() {
+      const status = this.file?.transcriptionStatus;
+      const step = this.file?.transcription?.currentStep;
+      
+      if (status === 'pending') return '排队中...';
+      if (status !== 'processing') return '处理中...';
+      
+      const stepMap = {
+        downloading: '正在下载音频...',
+        transcribing: '正在转录中...',
+        polishing: '正在润色文本...',
+        summarizing: '正在生成摘要...'
+      };
+      
+      return stepMap[step] || '正在处理中...';
+    },
+    progressText() {
+      const progress = this.file?.transcription?.progress;
+      if (typeof progress === 'number') {
+        return `已完成 ${progress}%`;
+      }
+      return `预计还需 ${this.estimatedTime || 5} 分钟`;
+    }
+  },
   methods: {
     retryTranscription() {
       this.triggerEvent('retry')
@@ -61,22 +86,11 @@ createComponent({
 }
 
 .status-icon {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 40rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 24rpx;
   flex-shrink: 0;
-}
-
-.status-icon.processing {
-  background: #ecfdf5;
-}
-
-.status-icon.error {
-  background: #fee2e2;
 }
 
 .spinner {

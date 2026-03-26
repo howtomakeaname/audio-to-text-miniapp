@@ -73,24 +73,22 @@ module.exports = defineConfig({
   ],
   theme: {
     colors: themeColors,
-    extend: {
-      // 自定义间距
-      spacing: {
-        'safe-top': 'var(--safe-top, 0px)',
-        'safe-bottom': 'var(--safe-bottom, 0px)',
-      },
-      // 圆角
-      borderRadius: {
-        'xl': '12px',
-        '2xl': '16px',
-        '3xl': '20px',
-      },
-      // 阴影
-      boxShadow: {
-        'card': '0 2px 8px rgba(0, 0, 0, 0.06)',
-        'card-hover': '0 4px 16px rgba(0, 0, 0, 0.1)',
-        'float': '0 8px 24px rgba(0, 0, 0, 0.12)',
-      },
+    // 自定义间距
+    spacing: {
+      'safe-top': 'var(--safe-top, 0px)',
+      'safe-bottom': 'var(--safe-bottom, 0px)',
+    },
+    // 圆角
+    borderRadius: {
+      'xl': '12px',
+      '2xl': '16px',
+      '3xl': '20px',
+    },
+    // 阴影
+    boxShadow: {
+      'card': '0 2px 8px rgba(0, 0, 0, 0.06)',
+      'card-hover': '0 4px 16px rgba(0, 0, 0, 0.1)',
+      'float': '0 8px 24px rgba(0, 0, 0, 0.12)',
     },
   },
   shortcuts: [

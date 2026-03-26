@@ -11,7 +11,7 @@
       <!-- 本地文件上传 -->
       <view class="option-card" bindtap="chooseLocalFile">
         <view class="option-icon local">
-          <icon name="upload" size="40" color="#ffffff" />
+          <icon name="upload" size="40" color="#3d8b7a" />
         </view>
         <view class="option-content">
           <text class="option-title">本地文件</text>
@@ -23,7 +23,7 @@
       <!-- 微信聊天记录 -->
       <view class="option-card" bindtap="chooseMessageFile">
         <view class="option-icon wechat">
-          <icon name="message" size="40" color="#ffffff" />
+          <icon name="message" size="40" color="#07c160" />
         </view>
         <view class="option-content">
           <text class="option-title">微信聊天记录</text>
@@ -74,7 +74,7 @@
       </view>
       <view class="tips-item">
         <icon name="check" size="14" color="#3d8b7a" />
-        <text>转录完成后自动生成摘要</text>
+        <text>转录完成后，自动润色并生成摘要</text>
       </view>
     </view>
   </view>
@@ -337,7 +337,7 @@ createPage({
 /* 页面头部 */
 .page-header {
   padding: 48rpx 32rpx 32rpx;
-  background: linear-gradient(135deg, #3d8b7a 0%, #2d6f61 100%);
+  background: linear-gradient(180deg, #3d8b7a 0%, #2d6f61 100%);
 }
 
 .page-title {
@@ -375,22 +375,11 @@ createPage({
 }
 
 .option-icon {
-  width: 88rpx;
-  height: 88rpx;
-  border-radius: 24rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 24rpx;
   flex-shrink: 0;
-}
-
-.option-icon.local {
-  background: linear-gradient(135deg, #3d8b7a 0%, #2d6f61 100%);
-}
-
-.option-icon.wechat {
-  background: linear-gradient(135deg, #07c160 0%, #059e4c 100%);
 }
 
 .option-content {
@@ -461,10 +450,6 @@ createPage({
 }
 
 .file-icon {
-  width: 72rpx;
-  height: 72rpx;
-  background: #f0f7f4;
-  border-radius: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;

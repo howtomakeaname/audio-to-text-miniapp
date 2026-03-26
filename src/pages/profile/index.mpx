@@ -245,7 +245,7 @@ createPage({
 /* 用户信息卡片 */
 .user-card {
   position: relative;
-  background: linear-gradient(135deg, #3d8b7a 0%, #2d6f61 100%);
+  background: linear-gradient(180deg, #3d8b7a 0%, #2d6f61 100%);
   padding: 48rpx 32rpx;
   overflow: hidden;
 }
@@ -395,33 +395,10 @@ createPage({
 }
 
 .menu-icon {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 24rpx;
-}
-
-.menu-icon.about {
-  background: #f0f7f4;
-}
-
-.menu-icon.help {
-  background: #dbeafe;
-}
-
-.menu-icon.service {
-  background: #fce7f3;
-}
-
-.menu-icon.cache {
-  background: #f3f4f6;
-}
-
-.menu-icon.update {
-  background: #f3f4f6;
 }
 
 .menu-text {

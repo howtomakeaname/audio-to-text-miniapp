@@ -1,7 +1,7 @@
 <template>
-  <view class="result-section" wx:if="{{file.transcriptionStatus === 'completed' && file.transcription}}">
+  <view class="result-section" wx:if="{{file.transcription}}">
     <!-- 摘要卡片 -->
-    <view class="result-card">
+    <view class="result-card" wx:if="{{file.transcription.summaryText}}">
       <view class="card-header">
         <icon name="file-text" size="20" color="#3d8b7a" />
         <text class="card-title">内容摘要</text>
@@ -24,7 +24,7 @@
     </view>
 
     <!-- 完整转录文本 -->
-    <view class="result-card">
+    <view class="result-card" wx:if="{{file.transcription.transcriptText}}">
       <view class="card-header">
         <icon name="align-left" size="20" color="#3d8b7a" />
         <text class="card-title">完整转录</text>
