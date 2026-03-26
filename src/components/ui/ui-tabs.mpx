@@ -1,0 +1,112 @@
+<template>
+  <view class="ui-tabs">
+    <scroll-view scroll-x="true" class="tabs-scroll" show-scrollbar="false" scroll-into-view="tab-{{activeIndex}}">
+      <view class="tabs-inner">
+        <view
+          wx:for="{{items}}"
+          wx:key="value"
+          id="tab-{{index}}"
+          class="tab-item {{activeIndex === index ? 'active' : ''}}"
+          data-index="{{index}}"
+          data-value="{{item.value}}"
+          bindtap="onChange"
+        >
+          <text class="tab-label">{{item.label}}</text>
+        </view>
+        <!-- 底部高亮指示器 -->
+        <view class="tab-indicator" style="transform: translateX({{indicatorPosition}}px); width: {{indicatorWidth}}px"></view>
+      </view>
+    </scroll-view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    items: { type: Array, value: [] },
+    value: { type: null, value: '' }
+  },
+  data: {
+    indicatorPosition: 0,
+    indicatorWidth: 20
+  },
+  computed: {
+    activeIndex() {
+      const index = this.items.findIndex(item => item.value === this.value)
+      return index === -1 ? 0 : index
+    }
+  },
+  watch: {
+    activeIndex: {
+      handler(newVal) {
+        this.updateIndicator(newVal)
+      },
+      immediate: true
+    }
+  },
+  methods: {
+    onChange(e) {
+      const val = e.currentTarget.dataset.value
+      this.triggerEvent('change', val)
+    },
+    updateIndicator(index) {
+      // 简单模拟下划线偏移（由于微信小程序的节点查询特性，这里演示通过固定宽度计算，如果需要精确字宽，可用 wx.createSelectorQuery）
+      // 假设每个 tab margin 固定，且按比例。为求稳定展示效果，暂用简单等距。实际可根据 index 和项数乘算
+      // 这里给一个通用的 fallback。
+      const tabWidth = 60 // average char width placeholder
+      const gap = 24 // average gap
+      this.indicatorPosition = index * (tabWidth + gap) + 16
+      this.indicatorWidth = 28 // 固定一个小段
+    }
+  }
+})
+</script>
+
+<style>
+.ui-tabs {
+  width: 100%;
+  border-bottom: 0.5px solid #E5E5EA; /* iOS faint line */
+  background: transparent;
+}
+
+.tabs-scroll {
+  width: 100%;
+}
+
+.tabs-inner {
+  position: relative;
+  display: flex;
+  flex-wrap: nowrap;
+  padding: 0 16rpx;
+}
+
+.tab-item {
+  padding: 24rpx 20rpx;
+  margin-right: 24rpx;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tab-label {
+  font-size: 30rpx;
+  color: #8E8E93; /* Unselected iOS color */
+  transition: all 0.2s ease;
+}
+
+.tab-item.active .tab-label {
+  color: #3d8b7a; /* 主题绿 */
+  font-weight: 600;
+}
+
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 6rpx;
+  border-radius: 6rpx 6rpx 0 0;
+  background: #3d8b7a;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+</style>
+<script type="application/json">{"component":true}</script>

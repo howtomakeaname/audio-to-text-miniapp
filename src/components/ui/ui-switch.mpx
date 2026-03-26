@@ -1,0 +1,59 @@
+<template>
+  <view class="ui-switch {{checked ? 'checked' : ''}} {{disabled ? 'disabled' : ''}}" bindtap="onToggle">
+    <view class="switch-knob"></view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    checked: { type: Boolean, value: false },
+    disabled: { type: Boolean, value: false }
+  },
+  methods: {
+    onToggle() {
+      if (this.disabled) return
+      this.triggerEvent('change', !this.checked)
+    }
+  }
+})
+</script>
+
+<style>
+.ui-switch {
+  width: 102rpx;
+  height: 62rpx;
+  border-radius: 31rpx;
+  background: #E9E9EA;
+  position: relative;
+  transition: background-color 0.3s;
+  box-sizing: border-box;
+}
+
+.ui-switch.checked {
+  background: #3d8b7a; /* 主题绿 */
+}
+
+.ui-switch.disabled {
+  opacity: 0.5;
+}
+
+.switch-knob {
+  position: absolute;
+  top: 4rpx;
+  left: 4rpx;
+  width: 54rpx;
+  height: 54rpx;
+  border-radius: 27rpx;
+  background: #ffffff;
+  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.15), 0 2rpx 2rpx rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s cubic-bezier(0.3, 1.05, 0.4, 1.05); /* 带有微弱 Q 弹的原生手感 */
+}
+
+.ui-switch.checked .switch-knob {
+  transform: translateX(40rpx);
+}
+</style>
+<script type="application/json">{"component":true}</script>

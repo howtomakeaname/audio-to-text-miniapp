@@ -1,0 +1,90 @@
+<template>
+  <view class="ui-loading-wrapper {{vertical ? 'vertical' : ''}}">
+    <view 
+      class="ios-spinner"
+      style="width: {{size}}rpx; height: {{size}}rpx; --spinner-color: {{color}};"
+    >
+      <view class="spinner-blade" wx:for="{{[1,2,3,4,5,6,7,8,9,10,11,12]}}" wx:key="*this"></view>
+    </view>
+    <text wx:if="{{text}}" class="ui-loading-text" style="font-size: {{textSize}}rpx; color: {{textColor}}">{{text}}</text>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    size: { type: Number, value: 48 },
+    color: { type: String, value: '#8E8E93' }, // iOS 默认菊花多为灰灰色
+    text: { type: String, value: '' },
+    textColor: { type: String, value: '#8E8E93' },
+    textSize: { type: Number, value: 26 },
+    vertical: { type: Boolean, value: false }
+  }
+})
+</script>
+
+<style>
+.ui-loading-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+}
+
+.ui-loading-wrapper.vertical {
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+/* iOS 18 原生菊花加载效果 (UIActivityIndicatorView) */
+.ios-spinner {
+  position: relative;
+  display: inline-block;
+}
+
+.spinner-blade {
+  position: absolute;
+  left: 46%;
+  bottom: 0;
+  width: 8%;
+  height: 26%;
+  border-radius: 4px; /* iOS 圆角花瓣 */
+  background-color: var(--spinner-color, #8E8E93);
+  transform-origin: center -88%;
+  animation: ios-spin 1s infinite linear;
+}
+
+.spinner-blade:nth-child(1) { transform: rotate(0deg); animation-delay: -0.9167s; }
+.spinner-blade:nth-child(2) { transform: rotate(30deg); animation-delay: -0.833s; }
+.spinner-blade:nth-child(3) { transform: rotate(60deg); animation-delay: -0.75s; }
+.spinner-blade:nth-child(4) { transform: rotate(90deg); animation-delay: -0.667s; }
+.spinner-blade:nth-child(5) { transform: rotate(120deg); animation-delay: -0.5833s; }
+.spinner-blade:nth-child(6) { transform: rotate(150deg); animation-delay: -0.5s; }
+.spinner-blade:nth-child(7) { transform: rotate(180deg); animation-delay: -0.4167s; }
+.spinner-blade:nth-child(8) { transform: rotate(210deg); animation-delay: -0.333s; }
+.spinner-blade:nth-child(9) { transform: rotate(240deg); animation-delay: -0.25s; }
+.spinner-blade:nth-child(10) { transform: rotate(270deg); animation-delay: -0.1667s; }
+.spinner-blade:nth-child(11) { transform: rotate(300deg); animation-delay: -0.0833s; }
+.spinner-blade:nth-child(12) { transform: rotate(330deg); animation-delay: 0s; }
+
+@keyframes ios-spin {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.25;
+  }
+}
+
+.ui-loading-text {
+  font-weight: 500;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true
+}
+</script>

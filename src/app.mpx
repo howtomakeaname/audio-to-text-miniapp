@@ -162,6 +162,7 @@ page {
     "./pages/upload/index",
     "./pages/records/index",
     "./pages/profile/index",
+    "./pages/about/index",
     "./pages/detail/index"
   ],
   "tabBar": {
