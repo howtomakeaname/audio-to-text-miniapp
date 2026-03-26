@@ -71,7 +71,6 @@ createComponent({
         query.select('.tabs-inner').boundingClientRect()
         query.exec((res) => {
           if (!res[0] || !res[1] || !res[2] || !res[0][index] || !res[1][index]) return
-          const tabRect = res[0][index]
           const labelRect = res[1][index]
           const containerRect = res[2]
           

@@ -1,6 +1,6 @@
 <template>
   <view class="ui-segment">
-    <view class="segment-bg" style="transform: translateX({{activeIndex * 100}}%); width: {{100 / items.length}}%;"></view>
+    <view class="segment-bg" style="transform: translateX({{activeIndex * 100}}%); width: calc((100% - 8rpx) / {{items.length || 1}});"></view>
     <view
       class="segment-item {{activeIndex === index ? 'active' : ''}}"
       wx:for="{{items}}"
@@ -44,7 +44,8 @@ createComponent({
   background: #7676801F; /* iOS Segmented Control Bg */
   border-radius: 16rpx;
   padding: 4rpx;
-  overflow: hidden;
+  box-sizing: border-box;
+  z-index: 0;
 }
 
 .segment-bg {
@@ -54,7 +55,7 @@ createComponent({
   left: 4rpx;
   background: #ffffff;
   border-radius: 12rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.06), 0 2rpx 4rpx rgba(0, 0, 0, 0.04);
   transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1);
   z-index: 1;
 }
@@ -66,11 +67,11 @@ createComponent({
   justify-content: center;
   position: relative;
   z-index: 2;
-  padding: 12rpx 0;
+  padding: 10rpx 24rpx;
 }
 
 .segment-item text {
-  font-size: 28rpx;
+  font-size: 26rpx;
   font-weight: 500;
   color: #3C3C43; /* iOS Secondary Text */
   transition: color 0.2s;

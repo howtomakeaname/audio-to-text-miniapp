@@ -1,6 +1,6 @@
 import { defineStore } from '@mpxjs/pinia'
 import { ref, computed } from '@mpxjs/core'
-import { getFileList, getFileDetail, deleteFile } from '../api/file'
+import { getFileList, getFileDetail, deleteFile, renameFile as apiRenameFile } from '../api/file'
 
 export const useFileStore = defineStore('file', () => {
   // State
@@ -122,6 +122,19 @@ export const useFileStore = defineStore('file', () => {
     }
   }
 
+  // 重命名文件
+  const renameFile = async (fileId, newName) => {
+    try {
+      const res = await apiRenameFile(fileId, newName)
+      const updatedData = res.data
+      updateFile(fileId, { originalName: updatedData.originalName })
+      return { success: true, data: updatedData }
+    } catch (error) {
+      console.error('重命名文件失败', error)
+      throw error
+    }
+  }
+
   // 清空文件列表
   const clearFiles = () => {
     fileList.value = []
@@ -153,6 +166,7 @@ export const useFileStore = defineStore('file', () => {
     fetchFileList,
     fetchFileDetail,
     removeFileById,
+    renameFile,
     clearFiles
   }
 })

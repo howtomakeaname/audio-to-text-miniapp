@@ -8,7 +8,11 @@
         iconSize="32"
         iconColor="#3d8b7a"
         border="{{false}}"
-      />
+      >
+        <view slot="extra" class="more-action" catchtap="onMoreClick">
+          <icon name="more" size="24" color="#8E8E93" />
+        </view>
+      </ui-list-item>
     </ui-list>
   </view>
 </template>
@@ -22,6 +26,11 @@ createComponent({
       type: Object,
       value: {}
     }
+  },
+  methods: {
+    onMoreClick() {
+      this.triggerEvent('showactions')
+    }
   }
 })
 </script>
@@ -29,6 +38,13 @@ createComponent({
 <style>
 .file-card-wrapper {
   margin: 24rpx 32rpx 32rpx;
+}
+
+.more-action {
+  padding: 10rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
 

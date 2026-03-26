@@ -2,11 +2,12 @@
   "setting": {
     "newFeature": true,
     "urlCheck": true,
-    "es6": false,
+    "es6": true,
     "postcss": true,
     "minified": false,
     "checkSiteMap": false,
-    "autoAudits": false
+    "autoAudits": false,
+    "enhance": true
   },
   "appid": "wx988bfc78e8ee66fa",
   "projectname": "sptotext_test",

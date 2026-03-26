@@ -39,6 +39,20 @@ export const deleteFile = (id) => {
 }
 
 /**
+ * 重命名文件
+ * @param {number} id - 文件ID
+ * @param {string} originalName - 新的文件名称
+ * @returns {Promise}
+ */
+export const renameFile = (id, originalName) => {
+  return request({
+    url: `/files/${id}/rename`,
+    method: 'PUT',
+    data: { originalName }
+  })
+}
+
+/**
  * 创建文件记录并启动转录
  * @param {Object} data - {originalName, ossKey, fileSize, mimeType}
  * @returns {Promise}

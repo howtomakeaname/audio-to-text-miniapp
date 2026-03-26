@@ -15,7 +15,7 @@
 
     <!-- 文件信息卡片 -->
     <view class="content-wrapper">
-      <file-meta file="{{file}}" />
+      <file-meta file="{{file}}" bind:showactions="showActions" />
 
       <!-- 音频播放器 -->
       <audio-player
@@ -51,7 +51,7 @@
           </view>
           <view class="card-content summary-content">
             <view class="summary-text">
-              <mp-html content="{{summaryHtml}}" tag-style="{{tagStyle}}" />
+              <mp-html content="{{summaryHtml}}" tag-style="{{tagStyle}}" selectable="{{true}}" />
             </view>
           </view>
           <view class="card-actions">
@@ -59,9 +59,15 @@
               <icon name="copy" size="16" color="#6b7280" />
               <text>复制</text>
             </view>
-            <view class="action-btn" bindtap="shareSummary">
-              <icon name="share-2" size="16" color="#6b7280" />
-              <text>分享</text>
+            <!--
+            <view class="action-btn" bindtap="exportSummary">
+              <icon name="download" size="16" color="#6b7280" />
+              <text>导出</text>
+            </view>
+            -->
+            <view class="action-btn" bindtap="expandSummary">
+              <icon name="maximize" size="16" color="#6b7280" />
+              <text>全屏查看</text>
             </view>
           </view>
         </view>
@@ -73,6 +79,7 @@
               <icon name="align-left" size="20" color="#3d8b7a" />
             </view>
             <text class="card-title">完整转录</text>
+            <view class="word-count">{{wordCount}} 字</view>
             <view class="text-switch" wx:if="{{file.transcription.polishedText}}">
               <ui-segment 
                 items="{{ [{label: '原文', value: 'original'}, {label: '润色', value: 'polished'}] }}" 
@@ -80,11 +87,10 @@
                 bindchange="onPolishedChange" 
               />
             </view>
-            <view class="word-count">{{wordCount}} 字</view>
           </view>
           <view class="card-content transcript-content">
             <view class="transcript-text">
-              <mp-html content="{{transcriptHtml}}" tag-style="{{tagStyle}}" />
+              <mp-html content="{{transcriptHtml}}" tag-style="{{tagStyle}}" selectable="{{true}}" />
             </view>
           </view>
           <view class="card-actions">
@@ -92,6 +98,12 @@
               <icon name="copy" size="16" color="#6b7280" />
               <text>复制</text>
             </view>
+            <!--
+            <view class="action-btn" bindtap="exportTranscript">
+              <icon name="download" size="16" color="#6b7280" />
+              <text>导出</text>
+            </view>
+            -->
             <view class="action-btn" bindtap="expandTranscript">
               <icon name="maximize" size="16" color="#6b7280" />
               <text>全屏查看</text>
@@ -114,6 +126,41 @@
       <ui-button block type="primary" bind:click="reupload">重新转录</ui-button>
     </view>
   </view>
+
+  <!-- 全屏查看遮罩层 -->
+  <view class="fullscreen-overlay slide-up" wx:if="{{isFullscreen}}" style="padding-top: {{navBarHeight}}px; --nav-height: {{navBarHeight}}px; --status-bar-height: {{statusBarHeight}}px; --capsule-width: {{capsuleWidth}}px;">
+    <view class="custom-nav-bar" style="background: #F2F2F7;">
+      <view class="nav-bar-inner">
+        <view class="back-btn" bindtap="closeFullscreen">
+          <icon name="x" size="24" color="#1f2937" />
+          <text>关闭</text>
+        </view>
+        <view class="nav-title">{{fullscreenTitle}}</view>
+        <view class="right-placeholder"></view>
+      </view>
+    </view>
+    <scroll-view scroll-y class="fullscreen-scroll">
+      <view class="fullscreen-content transcript-text">
+        <mp-html content="{{fullscreenContent}}" tag-style="{{tagStyle}}" selectable="{{true}}" />
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 重命名弹窗 -->
+  <ui-modal
+    visible="{{showRenameModal}}"
+    title="重命名文件"
+    bindcancel="closeRenameModal"
+    bindconfirm="confirmRename"
+  >
+    <view style="margin-top: 20rpx;">
+      <ui-input
+        value="{{renameInput}}"
+        placeholder="请输入新的文件名称"
+        bindinput="onRenameInput"
+      />
+    </view>
+  </ui-modal>
 </template>
 
 <script>
@@ -144,6 +191,9 @@ createPage({
     playUrl: null,
     playUrlExpiredAt: null,
     showPolished: false,
+    isFullscreen: false,
+    fullscreenTitle: '',
+    fullscreenContent: '',
     tagStyle: {
       p: 'line-height: 1.8; margin-bottom: 0.8em; text-align: justify;',
       h1: 'font-size: 1.4em; font-weight: 600; margin-bottom: 0.6em; margin-top: 0.8em; color: #111827;',
@@ -479,6 +529,114 @@ createPage({
     })
   },
 
+  exportSummary() {
+    this.exportTextFile('summary')
+  },
+
+  exportTranscript() {
+    this.exportTextFile('transcript')
+  },
+
+  exportTextFile(type) {
+    let content = ''
+    let filenameStr = ''
+    if (type === 'summary') {
+      content = this.data.file.transcription?.summaryText || ''
+      filenameStr = `${this.data.file.name}_摘要.txt`
+    } else {
+      const textKey = this.data.showPolished ? 'polishedText' : 'transcriptText'
+      content = this.data.file.transcription?.[textKey] || ''
+      filenameStr = `${this.data.file.name}_完整转录.txt`
+    }
+
+    if (!content) {
+      return wx.showToast({ title: '暂无内容导出', icon: 'none' })
+    }
+
+    const fs = wx.getFileSystemManager()
+    // 替换非法字符，避免写入失败
+    const safeFilename = filenameStr.replace(/[/\\?%*:|"<>]/g, '_')
+    // 使用临时目录避免本地存储超限
+    const filePath = `${wx.env.USER_DATA_PATH}/tmp_${Date.now()}_${safeFilename}`
+
+    try {
+      wx.showLoading({ title: '生成中...', mask: true })
+      // 写入到临时缓存区
+      fs.writeFileSync(filePath, content, 'utf-8')
+      wx.hideLoading()
+      
+      const shareAction = () => {
+        if (wx.shareFileMessage) {
+          wx.shareFileMessage({
+            filePath,
+            fileName: safeFilename,
+            success: () => {
+              console.log('导出成功')
+            },
+            fail: (err) => {
+              console.error('导出失败', err)
+              this.fallbackOpenDocument(filePath)
+            },
+            complete: () => {
+              // 尝试异步清理临时文件
+              setTimeout(() => {
+                try { fs.unlinkSync(filePath) } catch (e) {}
+              }, 60000)
+            }
+          })
+        } else {
+          this.fallbackOpenDocument(filePath)
+        }
+      }
+
+      shareAction()
+      
+    } catch (err) {
+      wx.hideLoading()
+      console.error('写文件失败', err)
+      // 如果报错超过文件大小，尝试清理整个目录下的老tmp文件再试
+      if (err.message && err.message.includes('exceeded')) {
+        try {
+          const files = fs.readdirSync(wx.env.USER_DATA_PATH)
+          files.forEach(f => {
+            if (f.startsWith('tmp_')) {
+              try { fs.unlinkSync(`${wx.env.USER_DATA_PATH}/${f}`) } catch(e){}
+            }
+          })
+        } catch (e) {}
+      }
+      wx.showToast({ title: '导出失败,空间不足', icon: 'none' })
+    }
+  },
+
+  fallbackOpenDocument(filePath) {
+    wx.openDocument({
+      filePath,
+      showMenu: true,
+      success: () => {
+        console.log('打开文档成功')
+      },
+      fail: (err) => {
+        console.error('打开文档失败', err)
+        wx.showToast({ title: '无法预览此文件', icon: 'none' })
+      },
+      complete: () => {
+        const fs = wx.getFileSystemManager()
+        setTimeout(() => {
+          try { fs.unlinkSync(filePath) } catch (e) {}
+        }, 60000)
+      }
+    })
+  },
+
+  expandSummary() {
+    this.setData({
+      isFullscreen: true,
+      fullscreenTitle: '内容摘要',
+      fullscreenContent: this.summaryHtml
+    })
+  },
+
   copyTranscript() {
     const textKey = this.data.showPolished ? 'polishedText' : 'transcriptText'
     const transcript = this.data.file.transcription?.[textKey]
@@ -493,8 +651,18 @@ createPage({
   },
 
   expandTranscript() {
-    wx.navigateTo({
-      url: `/pages/transcript/index?id=${this.data.fileId}`
+    this.setData({
+      isFullscreen: true,
+      fullscreenTitle: '完整转录',
+      fullscreenContent: this.transcriptHtml
+    })
+  },
+
+  closeFullscreen() {
+    this.setData({
+      isFullscreen: false,
+      fullscreenTitle: '',
+      fullscreenContent: ''
     })
   },
 
@@ -550,12 +718,82 @@ createPage({
           case 0:
             this.shareSummary()
             break
+          case 1:
+            this.openRenameModal()
+            break
           case 2:
             this.deleteFile()
             break
         }
       }
     })
+  },
+
+  openRenameModal() {
+    // 获取当前文件名，去掉后缀显示在输入框中（或者不去掉）
+    // 这里为了方便，我们直接把原名放进去
+    let name = this.data.file.originalName || ''
+    // 去掉可能的 .mp3/.wav 等后缀，以提升体验
+    let nameWithoutExt = name
+    const lastDotIndex = name.lastIndexOf('.')
+    if (lastDotIndex > 0) {
+      nameWithoutExt = name.substring(0, lastDotIndex)
+    }
+
+    this.setData({
+      showRenameModal: true,
+      renameInput: nameWithoutExt
+    })
+  },
+
+  closeRenameModal() {
+    this.setData({
+      showRenameModal: false
+    })
+  },
+
+  onRenameInput(e) {
+    this.setData({
+      renameInput: e.detail
+    })
+  },
+
+  async confirmRename() {
+    const newName = this.data.renameInput.trim()
+    if (!newName) {
+      wx.showToast({ title: '文件名不能为空', icon: 'none' })
+      return
+    }
+
+    const { file, fileId } = this.data
+    // 补回后缀
+    let ext = ''
+    const lastDotIndex = (file.originalName || '').lastIndexOf('.')
+    if (lastDotIndex > 0) {
+      ext = file.originalName.substring(lastDotIndex)
+    }
+
+    const finalName = newName + ext
+    if (finalName === file.originalName) {
+      this.closeRenameModal()
+      return
+    }
+
+    const fileStore = useFileStore()
+    wx.showLoading({ title: '修改中...' })
+    try {
+      await fileStore.renameFile(fileId, finalName)
+      wx.hideLoading()
+      wx.showToast({ title: '重命名成功', icon: 'success' })
+      this.closeRenameModal()
+      // 更新本地数据
+      this.setData({
+        'file.originalName': finalName
+      })
+    } catch (e) {
+      wx.hideLoading()
+      wx.showToast({ title: '重命名失败', icon: 'none' })
+    }
   }
 })
 </script>
@@ -714,7 +952,6 @@ createPage({
 .text-switch {
   display: flex;
   align-items: center;
-  margin-right: 16rpx;
 }
 
 .word-count {
@@ -723,6 +960,7 @@ createPage({
   background: #f3f4f6;
   padding: 6rpx 16rpx;
   border-radius: 8rpx;
+  margin-right: 16rpx;
 }
 
 .card-content {
@@ -795,6 +1033,34 @@ createPage({
 .bottom-bar .btn-wrap {
   flex: 1;
 }
+
+/* 全屏查看遮罩 */
+.fullscreen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #F2F2F7;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+}
+
+.fullscreen-scroll {
+  flex: 1;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.fullscreen-content {
+  padding: 40rpx 32rpx calc(constant(safe-area-inset-bottom) + 40rpx);
+  padding: 40rpx 32rpx calc(env(safe-area-inset-bottom) + 40rpx);
+  background-color: #ffffff;
+  min-height: 100%;
+  border-radius: 20rpx 20rpx 0 0;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
 </style>
 
 <script type="application/json">
@@ -808,7 +1074,9 @@ createPage({
     "status-card": "./components/status-card",
     "mp-html": "mp-html",
     "ui-button": "../../components/ui/ui-button",
-    "ui-segment": "../../components/ui/ui-segment"
+    "ui-segment": "../../components/ui/ui-segment",
+    "ui-modal": "../../components/ui/ui-modal",
+    "ui-input": "../../components/ui/ui-input"
   }
 }
 </script>

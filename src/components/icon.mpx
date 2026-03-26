@@ -29,6 +29,7 @@ const iconMap = {
   'file': 'i-lucide-file',
   'copy': 'i-lucide-copy',
   'share': 'i-lucide-share-2',
+  'download': 'i-lucide-download',
   'align-left': 'i-lucide-align-left',
   'maximize': 'i-lucide-maximize',
   'settings': 'i-lucide-settings',
