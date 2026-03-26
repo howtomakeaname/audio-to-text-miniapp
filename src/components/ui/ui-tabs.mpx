@@ -38,12 +38,24 @@ createComponent({
       return index === -1 ? 0 : index
     }
   },
+  ready() {
+    setTimeout(() => {
+      this.updateIndicator(this.activeIndex)
+    }, 100)
+  },
   watch: {
     activeIndex: {
       handler(newVal) {
         this.updateIndicator(newVal)
       },
       immediate: true
+    },
+    items: {
+      handler() {
+        setTimeout(() => {
+          this.updateIndicator(this.activeIndex)
+        }, 100)
+      }
     }
   },
   methods: {
@@ -52,13 +64,26 @@ createComponent({
       this.triggerEvent('change', val)
     },
     updateIndicator(index) {
-      // 简单模拟下划线偏移（由于微信小程序的节点查询特性，这里演示通过固定宽度计算，如果需要精确字宽，可用 wx.createSelectorQuery）
-      // 假设每个 tab margin 固定，且按比例。为求稳定展示效果，暂用简单等距。实际可根据 index 和项数乘算
-      // 这里给一个通用的 fallback。
-      const tabWidth = 60 // average char width placeholder
-      const gap = 24 // average gap
-      this.indicatorPosition = index * (tabWidth + gap) + 16
-      this.indicatorWidth = 28 // 固定一个小段
+      this.$nextTick(() => {
+        const query = wx.createSelectorQuery().in(this)
+        query.selectAll('.tab-item').boundingClientRect()
+        query.selectAll('.tab-label').boundingClientRect()
+        query.select('.tabs-inner').boundingClientRect()
+        query.exec((res) => {
+          if (!res[0] || !res[1] || !res[2] || !res[0][index] || !res[1][index]) return
+          const tabRect = res[0][index]
+          const labelRect = res[1][index]
+          const containerRect = res[2]
+          
+          // 基于 tab-item 的容器偏移，加上 label在里面居中的偏离
+          const xPos = labelRect.left - containerRect.left
+          const width = labelRect.width
+          const indicatorWidth = 16 // 或者跟随文本宽度：width * 0.8
+          
+          this.indicatorPosition = xPos + (width - indicatorWidth) / 2
+          this.indicatorWidth = indicatorWidth
+        })
+      })
     }
   }
 })
@@ -102,6 +127,7 @@ createComponent({
 
 .tab-indicator {
   position: absolute;
+  left: 0;
   bottom: 0;
   height: 6rpx;
   border-radius: 6rpx 6rpx 0 0;

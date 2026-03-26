@@ -75,7 +75,7 @@
             <text class="card-title">完整转录</text>
             <view class="text-switch" wx:if="{{file.transcription.polishedText}}">
               <ui-segment 
-                items="{{ [{label: '原文', value: 'original'}, {label: '润色后', value: 'polished'}] }}" 
+                items="{{ [{label: '原文', value: 'original'}, {label: '润色', value: 'polished'}] }}" 
                 value="{{showPolished ? 'polished' : 'original'}}" 
                 bindchange="onPolishedChange" 
               />
