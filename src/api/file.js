@@ -50,3 +50,31 @@ export const createFileWithTranscription = (data) => {
     data
   })
 }
+
+/**
+ * 获取音频文件的签名播放 URL
+ * @param {number} id - 文件ID
+ * @param {number} expires - 过期时间（秒，60-86400）
+ * @returns {Promise}
+ */
+export const getAudioPlayUrl = (id, expires = 3600) => {
+  return request({
+    url: `/audio/${id}/play-url`,
+    method: 'GET',
+    data: { expires }
+  })
+}
+
+/**
+ * 刷新音频文件的签名播放 URL
+ * @param {number} id - 文件ID
+ * @param {number} expires - 过期时间（秒，60-86400）
+ * @returns {Promise}
+ */
+export const refreshAudioPlayUrl = (id, expires = 3600) => {
+  return request({
+    url: `/audio/${id}/refresh-play-url`,
+    method: 'POST',
+    data: { expires }
+  })
+}

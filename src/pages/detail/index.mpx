@@ -1,124 +1,78 @@
 <template>
   <view class="detail-page" wx:if="{{file}}">
-    <!-- 页面头部 -->
-    <view class="page-header">
-      <view class="header-left" bindtap="goBack">
-        <icon name="chevron-left" size="24" color="#1f2937" />
-      </view>
-      <text class="header-title">转录详情</text>
-      <view class="header-right" bindtap="showActions">
-        <icon name="more" size="24" color="#6b7280" />
-      </view>
-    </view>
 
     <!-- 文件信息卡片 -->
-    <view class="file-card">
-      <view class="file-icon-large">
-        <icon name="audio" size="48" color="#3d8b7a" />
-      </view>
-      <view class="file-info">
-        <text class="file-name">{{file.originalName}}</text>
-        <view class="file-meta">
-          <text>{{file.durationStr}}</text>
-          <text class="dot">·</text>
-          <text>{{file.sizeStr}}</text>
-          <text class="dot">·</text>
-          <text>{{file.createdAtStr}}</text>
-        </view>
-      </view>
-    </view>
+    <view class="content-wrapper">
+      <file-meta file="{{file}}" />
 
-    <!-- 音频播放器 -->
-    <view class="player-card" wx:if="{{file.ossUrl}}">
-      <view class="player-controls">
-        <view class="play-btn {{isPlaying ? 'playing' : ''}}" bindtap="togglePlay">
-          <icon name="{{isPlaying ? 'pause' : 'play'}}" size="32" color="#ffffff" />
-        </view>
-        <view class="progress-section">
-          <slider
-            class="progress-slider"
-            min="0"
-            max="{{duration}}"
-            value="{{currentTime}}"
-            block-size="12"
-            activeColor="#3d8b7a"
-            backgroundColor="#e5e7eb"
-            bindchange="onSliderChange"
-            bindchanging="onSliderChanging"
-          />
-          <view class="time-display">
-            <text class="current">{{currentTimeStr}}</text>
-            <text class="total">{{durationStr}}</text>
+      <!-- 音频播放器 -->
+      <audio-player
+        wx:if="{{playUrl}}"
+        playUrl="{{playUrl}}"
+        file="{{file}}"
+        isPlaying="{{isPlaying}}"
+        duration="{{duration}}"
+        currentTime="{{currentTime}}"
+        currentTimeStr="{{currentTimeStr}}"
+        durationStr="{{durationStr}}"
+        bind:togglePlay="togglePlay"
+        bind:sliderChange="onSliderChange"
+        bind:sliderChanging="onSliderChanging"
+      />
+
+      <!-- 转录状态卡片 -->
+      <status-card
+        file="{{file}}"
+        estimatedTime="{{estimatedTime}}"
+        bind:retry="retryTranscription"
+      />
+
+      <!-- 转录结果 -->
+      <view class="result-section" wx:if="{{file.transcriptionStatus === 'completed' && file.transcription}}">
+        <!-- 摘要卡片 -->
+        <view class="result-card">
+          <view class="card-header">
+            <view class="header-icon">
+              <icon name="file-text" size="20" color="#3d8b7a" />
+            </view>
+            <text class="card-title">内容摘要</text>
+          </view>
+          <view class="card-content">
+            <text class="summary-text">{{file.transcription.summaryText}}</text>
+          </view>
+          <view class="card-actions">
+            <view class="action-btn" bindtap="copySummary">
+              <icon name="copy" size="16" color="#6b7280" />
+              <text>复制</text>
+            </view>
+            <view class="action-btn" bindtap="shareSummary">
+              <icon name="share-2" size="16" color="#6b7280" />
+              <text>分享</text>
+            </view>
           </view>
         </view>
-      </view>
-    </view>
 
-    <!-- 转录状态 -->
-    <view class="status-card" wx:if="{{file.transcriptionStatus === 'processing' || file.transcriptionStatus === 'pending'}}">
-      <view class="status-icon processing">
-        <view class="spinner"></view>
-      </view>
-      <view class="status-info">
-        <text class="status-title">正在转录中...</text>
-        <text class="status-desc">预计还需 {{estimatedTime}} 分钟</text>
-      </view>
-    </view>
-
-    <view class="status-card error" wx:if="{{file.transcriptionStatus === 'failed'}}">
-      <view class="status-icon error">
-        <icon name="x" size="24" color="#dc2626" />
-      </view>
-      <view class="status-info">
-        <text class="status-title">转录失败</text>
-        <text class="status-desc">{{file.transcription?.errorMessage || '请重试'}}</text>
-      </view>
-      <view class="retry-btn" bindtap="retryTranscription">
-        <text>重试</text>
-      </view>
-    </view>
-
-    <!-- 转录结果 -->
-    <view class="result-section" wx:if="{{file.transcriptionStatus === 'completed' && file.transcription}}">
-      <!-- 摘要卡片 -->
-      <view class="result-card">
-        <view class="card-header">
-          <icon name="file-text" size="20" color="#3d8b7a" />
-          <text class="card-title">内容摘要</text>
-        </view>
-        <view class="card-content">
-          <text class="summary-text">{{file.transcription.summaryText}}</text>
-        </view>
-        <view class="card-actions">
-          <view class="action-btn" bindtap="copySummary">
-            <icon name="copy" size="16" color="#6b7280" />
-            <text>复制</text>
+        <!-- 完整转录文本 -->
+        <view class="result-card">
+          <view class="card-header">
+            <view class="header-icon">
+              <icon name="align-left" size="20" color="#3d8b7a" />
+            </view>
+            <text class="card-title">完整转录</text>
+            <view class="word-count">{{wordCount}} 字</view>
           </view>
-          <view class="action-btn" bindtap="shareSummary">
-            <icon name="share" size="16" color="#6b7280" />
-            <text>分享</text>
+          <view class="card-content">
+            <text class="transcript-text">{{file.transcription.transcriptText}}</text>
           </view>
-        </view>
-      </view>
-
-      <!-- 完整转录文本 -->
-      <view class="result-card">
-        <view class="card-header">
-          <icon name="align-left" size="20" color="#3d8b7a" />
-          <text class="card-title">完整转录</text>
-          <view class="word-count">{{wordCount}} 字</view>
-        </view>
-        <view class="card-content">
-          <text class="transcript-text">{{file.transcription.transcriptText}}</text>
-        </view>
-        <view class="card-actions">
-          <view class="action-btn" bindtap="copyTranscript">
-            <icon name="copy" size="16" color="#6b7280" />
-            <text>复制全文</text>
-          </view>
-          <view class="action-btn" bindtap="expandTranscript">
-            <icon name="maximize" size="16" color="#6b7280" />
-            <text>全屏查看</text>
+          <view class="card-actions">
+            <view class="action-btn" bindtap="copyTranscript">
+              <icon name="copy" size="16" color="#6b7280" />
+              <text>复制全文</text>
+            </view>
+            <view class="action-btn" bindtap="expandTranscript">
+              <icon name="maximize" size="16" color="#6b7280" />
+              <text>全屏查看</text>
+            </view>
           </view>
         </view>
       </view>
@@ -130,12 +84,12 @@
 
   <!-- 底部操作栏 -->
   <view class="bottom-bar" wx:if="{{file}}">
-    <view class="action-btn secondary" bindtap="deleteFile">
-      <icon name="trash" size="20" color="#dc2626" />
+    <view class="action-btn delete" bindtap="deleteFile">
+      <icon name="trash-2" size="20" color="#dc2626" />
       <text>删除</text>
     </view>
     <view class="action-btn primary" bindtap="reupload" wx:if="{{file.transcriptionStatus === 'failed'}}">
-      <icon name="refresh" size="20" color="#ffffff" />
+      <icon name="refresh-cw" size="20" color="#ffffff" />
       <text>重新转录</text>
     </view>
   </view>
@@ -144,10 +98,15 @@
 <script>
 import { createPage } from '@mpxjs/core'
 import { useFileStore } from '../../stores/file'
+import { getAudioPlayUrl, refreshAudioPlayUrl } from '../../api/file'
 import { formatDuration, formatFileSize, formatTime, formatDate } from '../../utils/format'
 
 createPage({
   data: {
+    statusBarHeight: 20,
+    navBarHeight: 64,
+    capsuleWidth: 87,
+    capsuleRightSpace: 10,
     fileId: null,
     file: null,
     isPlaying: false,
@@ -158,10 +117,13 @@ createPage({
     audioContext: null,
     estimatedTime: 5,
     wordCount: 0,
-    pollingTimer: null
+    pollingTimer: null,
+    playUrl: null,
+    playUrlExpiredAt: null
   },
 
   onLoad(options) {
+    this.initSystemInfo()
     if (options.id) {
       this.setData({ fileId: parseInt(options.id) })
       this.loadFileDetail()
@@ -179,6 +141,31 @@ createPage({
     if (this.data.audioContext) {
       this.data.audioContext.destroy()
     }
+  },
+
+  // 初始化系统信息
+  initSystemInfo() {
+    const sysInfo = wx.getSystemInfoSync()
+    const statusBarHeight = sysInfo.statusBarHeight || 20
+    let menuBtn = null
+    try {
+      menuBtn = wx.getMenuButtonBoundingClientRect()
+    } catch(e) {}
+
+    let navBarHeight, capsuleWidth
+    if (menuBtn && menuBtn.top) {
+      navBarHeight = (menuBtn.top - statusBarHeight) * 2 + menuBtn.height + statusBarHeight
+      capsuleWidth = menuBtn.width
+    } else {
+      navBarHeight = statusBarHeight + 44
+      capsuleWidth = 87
+    }
+
+    this.setData({
+      statusBarHeight,
+      navBarHeight,
+      capsuleWidth
+    })
   },
 
   async loadFileDetail() {
@@ -205,6 +192,11 @@ createPage({
         wordCount
       })
 
+      // 获取音频播放URL
+      if (file.ossKey) {
+        this.fetchAudioPlayUrl()
+      }
+
       // 如果正在处理，开始轮询
       if (file.transcriptionStatus === 'processing' || file.transcriptionStatus === 'pending') {
         this.startPolling()
@@ -216,6 +208,44 @@ createPage({
         icon: 'none'
       })
     }
+  },
+
+  // 获取音频播放URL
+  async fetchAudioPlayUrl() {
+    try {
+      const res = await getAudioPlayUrl(this.data.fileId)
+      console.log('获取音频播放URL响应:', res)
+      // 后端返回 code 为 0 表示成功
+      if ((res.code === 200 || res.code === 0) && res.data && res.data.playUrl) {
+        this.setData({
+          playUrl: res.data.playUrl,
+          playUrlExpiredAt: res.data.expiredAt
+        })
+        console.log('音频播放URL已设置:', res.data.playUrl)
+      } else {
+        console.warn('获取音频播放URL失败，响应数据不完整:', res)
+      }
+    } catch (error) {
+      console.error('获取音频播放URL失败', error)
+    }
+  },
+
+  // 刷新音频播放URL
+  async refreshPlayUrl() {
+    try {
+      const res = await refreshAudioPlayUrl(this.data.fileId)
+      // 后端返回 code 为 0 表示成功
+      if ((res.code === 200 || res.code === 0) && res.data) {
+        this.setData({
+          playUrl: res.data.playUrl,
+          playUrlExpiredAt: res.data.expiredAt
+        })
+        return res.data.playUrl
+      }
+    } catch (error) {
+      console.error('刷新音频播放URL失败', error)
+    }
+    return null
   },
 
   startPolling() {
@@ -235,14 +265,34 @@ createPage({
     }
   },
 
+  // 检查播放URL是否过期
+  isPlayUrlExpired() {
+    const { playUrlExpiredAt } = this.data
+    if (!playUrlExpiredAt) return false
+    const expiredTime = new Date(playUrlExpiredAt).getTime()
+    const now = Date.now()
+    // 如果距离过期时间不足5分钟，则认为已过期
+    return expiredTime - now < 5 * 60 * 1000
+  },
+
   // 音频播放控制
-  initAudio() {
+  async initAudio() {
     if (this.data.audioContext) {
       this.data.audioContext.destroy()
     }
 
+    // 检查URL是否过期，如果过期则刷新
+    let audioUrl = this.data.playUrl
+    if (!audioUrl || this.isPlayUrlExpired()) {
+      audioUrl = await this.refreshPlayUrl()
+      if (!audioUrl) {
+        wx.showToast({ title: '获取音频失败', icon: 'none' })
+        return
+      }
+    }
+
     const audioContext = wx.createInnerAudioContext()
-    audioContext.src = this.data.file.ossUrl
+    audioContext.src = audioUrl
 
     audioContext.onPlay(() => {
       this.setData({ isPlaying: true })
@@ -270,18 +320,26 @@ createPage({
 
     audioContext.onError((err) => {
       console.error('音频播放错误', err)
-      wx.showToast({
-        title: '播放失败',
-        icon: 'none'
-      })
+      // 如果是URL过期错误，尝试刷新
+      if (err.errCode === 10001 || err.errCode === 10003) {
+        this.refreshPlayUrl().then(newUrl => {
+          if (newUrl) {
+            this.initAudio()
+          }
+        })
+      } else {
+        wx.showToast({ title: '播放失败', icon: 'none' })
+      }
     })
 
     this.setData({ audioContext })
   },
 
-  togglePlay() {
+  async togglePlay() {
     if (!this.data.audioContext) {
-      this.initAudio()
+      await this.initAudio()
+      // 如果初始化失败，直接返回
+      if (!this.data.audioContext) return
     }
 
     if (this.data.isPlaying) {
@@ -326,7 +384,6 @@ createPage({
   },
 
   shareSummary() {
-    // 实现分享功能
     wx.showShareMenu({
       withShareTicket: true,
       menus: ['shareAppMessage', 'shareTimeline']
@@ -383,7 +440,6 @@ createPage({
   },
 
   reupload() {
-    // 重新上传逻辑
     wx.showToast({ title: '功能开发中', icon: 'none' })
   },
 
@@ -415,29 +471,50 @@ createPage({
 </script>
 
 <style>
+/* 页面基础样式 */
 .detail-page {
   min-height: 100vh;
   background: #f9fafb;
-  padding-bottom: calc(120rpx + env(safe-area-inset-bottom));
+  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
 }
 
-/* 页面头部 */
+/* 页面头部 - 渐变背景 */
 .page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24rpx 32rpx;
-  background: #ffffff;
-  border-bottom: 1rpx solid #f3f4f6;
+  position: relative;
+  z-index: 100;
 }
 
-.header-left,
-.header-right {
-  width: 80rpx;
-  height: 80rpx;
+.header-bg {
+  background: linear-gradient(135deg, #3d8b7a 0%, #2d6f61 100%);
+  border-radius: 0 0 32rpx 32rpx;
+  box-shadow: 0 4rpx 20rpx rgba(61, 139, 122, 0.3);
+}
+
+.header-content {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  padding: 0 32rpx;
+}
+
+.header-left {
+  position: absolute;
+  left: 32rpx;
+  width: 80rpx;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.header-right {
+  position: absolute;
+  right: 32rpx;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .header-left:active,
@@ -448,73 +525,168 @@ createPage({
 .header-title {
   font-size: 34rpx;
   font-weight: 600;
-  color: #1f2937;
+  color: #ffffff;
 }
 
-/* 文件信息卡片 */
-.file-card {
-  display: flex;
-  align-items: center;
+/* 内容区域 */
+.content-wrapper {
+  padding: 24rpx 32rpx;
+}
+
+/* 转录结果区域 */
+.result-section {
+  margin-top: 24rpx;
+}
+
+/* 结果卡片 */
+.result-card {
   background: #ffffff;
-  margin: 24rpx 32rpx;
-  padding: 32rpx;
   border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
   box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
 }
 
-.file-icon-large {
-  width: 96rpx;
-  height: 96rpx;
-  background: linear-gradient(135deg, #f0f7f4 0%, #dcede6 100%);
-  border-radius: 24rpx;
+.card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.header-icon {
+  width: 40rpx;
+  height: 40rpx;
+  background: #f0f7f4;
+  border-radius: 10rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 24rpx;
-  flex-shrink: 0;
+  margin-right: 16rpx;
 }
 
-.file-info {
+.card-title {
   flex: 1;
-  min-width: 0;
-}
-
-.file-name {
-  display: block;
   font-size: 32rpx;
   font-weight: 600;
   color: #1f2937;
-  margin-bottom: 12rpx;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.file-meta {
-  display: flex;
-  align-items: center;
+.word-count {
   font-size: 24rpx;
   color: #9ca3af;
+  background: #f3f4f6;
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
 }
 
-.file-meta .dot {
-  margin: 0 8rpx;
+.card-content {
+  margin-bottom: 24rpx;
 }
 
-/* 音频播放器 */
-.player-card {
-  background: #ffffff;
-  margin: 0 32rpx 24rpx;
-  padding: 24rpx;
-  border-radius: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+.summary-text {
+  font-size: 28rpx;
+  color: #4b5563;
+  line-height: 1.8;
+  display: block;
 }
 
-.player-controls {
+.transcript-text {
+  font-size: 28rpx;
+  color: #374151;
+  line-height: 1.8;
+  display: block;
+  max-height: 400rpx;
+  overflow: hidden;
+}
+
+.card-actions {
+  display: flex;
+  gap: 24rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #f3f4f6;
+}
+
+/* 操作按钮 */
+.action-btn {
   display: flex;
   align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 24rpx;
+  border-radius: 12rpx;
+  background: #f9fafb;
+  transition: all 0.2s ease;
 }
 
-.play-btn {
-  width: 80rpx;
- 
+.action-btn:active {
+  background: #f3f4f6;
+  transform: scale(0.98);
+}
+
+.action-btn text {
+  font-size: 26rpx;
+  color: #6b7280;
+}
+
+/* 底部占位 */
+.bottom-spacer {
+  height: 120rpx;
+}
+
+/* 底部操作栏 */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24rpx;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+
+.bottom-bar .action-btn {
+  flex: 1;
+  justify-content: center;
+  padding: 24rpx 0;
+  border-radius: 16rpx;
+}
+
+.bottom-bar .action-btn.delete {
+  background: #fef2f2;
+  border: 2rpx solid #fecaca;
+}
+
+.bottom-bar .action-btn.delete text {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.bottom-bar .action-btn.primary {
+  background: linear-gradient(135deg, #3d8b7a 0%, #2d6f61 100%);
+  box-shadow: 0 4rpx 12rpx rgba(61, 139, 122, 0.3);
+}
+
+.bottom-bar .action-btn.primary:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.bottom-bar .action-btn.primary text {
+  color: #ffffff;
+  font-weight: 500;
+}
+</style>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "icon": "../../components/icon",
+    "file-meta": "./components/file-meta",
+    "audio-player": "./components/audio-player",
+    "status-card": "./components/status-card"
+  }
+}
+</script>

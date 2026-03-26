@@ -1,0 +1,133 @@
+<template>
+  <view>
+    <view class="status-card" wx:if="{{file.transcriptionStatus === 'processing' || file.transcriptionStatus === 'pending'}}">
+      <view class="status-icon processing">
+        <view class="spinner"></view>
+      </view>
+      <view class="status-info">
+        <text class="status-title">正在转录中...</text>
+        <text class="status-desc">预计还需 {{estimatedTime}} 分钟</text>
+      </view>
+    </view>
+
+    <view class="status-card error" wx:if="{{file.transcriptionStatus === 'failed'}}">
+      <view class="status-icon error">
+        <icon name="x" size="24" color="#dc2626" />
+      </view>
+      <view class="status-info">
+        <text class="status-title">转录失败</text>
+        <text class="status-desc">{{file.transcription?.errorMessage || '请重试'}}</text>
+      </view>
+      <view class="retry-btn" bindtap="retryTranscription">
+        <text>重试</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { createComponent } from '@mpxjs/core'
+
+createComponent({
+  properties: {
+    file: {
+      type: Object,
+      value: {}
+    },
+    estimatedTime: {
+      type: Number,
+      value: 0
+    }
+  },
+  methods: {
+    retryTranscription() {
+      this.triggerEvent('retry')
+    }
+  }
+})
+</script>
+
+<style>
+.status-card {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 40rpx;
+  margin: 0 30rpx 20rpx;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.status-card.error {
+  background: #fef2f2;
+}
+
+.status-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.status-icon.processing {
+  background: #ecfdf5;
+}
+
+.status-icon.error {
+  background: #fee2e2;
+}
+
+.spinner {
+  width: 40rpx;
+  height: 40rpx;
+  border: 4rpx solid #d1fae5;
+  border-top-color: #3d8b7a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-info {
+  flex: 1;
+}
+
+.status-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 8rpx;
+  display: block;
+}
+
+.status-desc {
+  font-size: 26rpx;
+  color: #6b7280;
+}
+
+.retry-btn {
+  padding: 12rpx 30rpx;
+  background: #ffffff;
+  border: 2rpx solid #dc2626;
+  color: #dc2626;
+  font-size: 26rpx;
+  border-radius: 30rpx;
+}
+</style>
+
+<script type="application/json">
+{
+  "component": true,
+  "usingComponents": {
+    "icon": "../../../components/icon"
+  }
+}
+</script>
