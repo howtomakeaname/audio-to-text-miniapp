@@ -26,10 +26,22 @@
       <view class="card-header">
         <icon name="align-left" size="20" color="#3d8b7a" />
         <text class="card-title">完整转录</text>
-        <view class="word-count">{{wordCount}} 字</view>
+        <view class="text-switch" wx:if="{{file.transcription.polishedText}}">
+          <view 
+            class="switch-btn {{!showPolished ? 'active' : ''}}"
+            bindtap="togglePolished"
+            data-type="original"
+          >原文</view>
+          <view 
+            class="switch-btn {{showPolished ? 'active' : ''}}"
+            bindtap="togglePolished"
+            data-type="polished"
+          >润色后</view>
+        </view>
+        <view class="word-count">{{computedWordCount}} 字</view>
       </view>
       <view class="card-content">
-        <text class="transcript-text" user-select="{{true}}">{{file.transcription.transcriptText}}</text>
+        <text class="transcript-text" user-select="{{true}}">{{showPolished ? file.transcription.polishedText : file.transcription.transcriptText}}</text>
       </view>
       <view class="card-actions">
         <view class="action-btn" bindtap="handleCopyTranscript">
@@ -53,13 +65,24 @@ createComponent({
     file: {
       type: Object,
       value: {}
-    },
-    wordCount: {
-      type: Number,
-      value: 0
+    }
+  },
+  data: {
+    showPolished: false
+  },
+  computed: {
+    computedWordCount() {
+      const text = this.showPolished 
+        ? this.file?.transcription?.polishedText 
+        : this.file?.transcription?.transcriptText
+      return text ? text.length : 0
     }
   },
   methods: {
+    togglePolished(e) {
+      const type = e.currentTarget.dataset.type
+      this.showPolished = type === 'polished'
+    },
     handleCopySummary() {
       this.triggerEvent('copySummary')
     },
@@ -67,7 +90,10 @@ createComponent({
       this.triggerEvent('shareSummary')
     },
     handleCopyTranscript() {
-      this.triggerEvent('copyTranscript')
+      const transcript = this.showPolished 
+        ? this.file?.transcription?.polishedText 
+        : this.file?.transcription?.transcriptText
+      this.triggerEvent('copyTranscript', { transcript })
     },
     handleExpandTranscript() {
       this.triggerEvent('expandTranscript')
@@ -102,6 +128,31 @@ createComponent({
   color: #1f2937;
   margin-left: 12rpx;
   flex: 1;
+}
+
+.text-switch {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-right: 16rpx;
+  background: #f3f4f6;
+  padding: 4rpx;
+  border-radius: 8rpx;
+}
+
+.switch-btn {
+  font-size: 22rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 6rpx;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.switch-btn.active {
+  background: #ffffff;
+  color: #3d8b7a;
+  font-weight: 500;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
 }
 
 .word-count {

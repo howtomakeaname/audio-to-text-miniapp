@@ -59,10 +59,22 @@
               <icon name="align-left" size="20" color="#3d8b7a" />
             </view>
             <text class="card-title">完整转录</text>
+            <view class="text-switch" wx:if="{{file.transcription.polishedText}}">
+              <view 
+                class="switch-btn {{!showPolished ? 'active' : ''}}"
+                bindtap="togglePolished"
+                data-type="original"
+              >原文</view>
+              <view 
+                class="switch-btn {{showPolished ? 'active' : ''}}"
+                bindtap="togglePolished"
+                data-type="polished"
+              >润色后</view>
+            </view>
             <view class="word-count">{{wordCount}} 字</view>
           </view>
           <view class="card-content">
-            <text class="transcript-text">{{file.transcription.transcriptText}}</text>
+            <text class="transcript-text">{{showPolished ? file.transcription.polishedText : file.transcription.transcriptText}}</text>
           </view>
           <view class="card-actions">
             <view class="action-btn" bindtap="copyTranscript">
@@ -119,7 +131,8 @@ createPage({
     wordCount: 0,
     pollingTimer: null,
     playUrl: null,
-    playUrlExpiredAt: null
+    playUrlExpiredAt: null,
+    showPolished: false
   },
 
   onLoad(options) {
@@ -183,7 +196,8 @@ createPage({
       }
 
       // 计算字数
-      const wordCount = file.transcription?.transcriptText?.length || 0
+      const textKey = this.data.showPolished ? 'polishedText' : 'transcriptText'
+      const wordCount = file.transcription?.[textKey]?.length || 0
 
       this.setData({
         file: formattedFile,
@@ -370,6 +384,19 @@ createPage({
     return `${mins}:${secs.toString().padStart(2, '0')}`
   },
 
+  // 切换原文和润色
+  togglePolished(e) {
+    const type = e.currentTarget.dataset.type
+    const showPolished = type === 'polished'
+    const textKey = showPolished ? 'polishedText' : 'transcriptText'
+    const wordCount = this.data.file?.transcription?.[textKey]?.length || 0
+
+    this.setData({ 
+      showPolished,
+      wordCount
+    })
+  },
+
   // 复制和分享
   copySummary() {
     const summary = this.data.file.transcription?.summaryText
@@ -391,7 +418,8 @@ createPage({
   },
 
   copyTranscript() {
-    const transcript = this.data.file.transcription?.transcriptText
+    const textKey = this.data.showPolished ? 'polishedText' : 'transcriptText'
+    const transcript = this.data.file.transcription?.[textKey]
     if (transcript) {
       wx.setClipboardData({
         data: transcript,
@@ -569,6 +597,31 @@ createPage({
   font-size: 32rpx;
   font-weight: 600;
   color: #1f2937;
+}
+
+.text-switch {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-right: 16rpx;
+  background: #f3f4f6;
+  padding: 4rpx;
+  border-radius: 8rpx;
+}
+
+.switch-btn {
+  font-size: 22rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 6rpx;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.switch-btn.active {
+  background: #ffffff;
+  color: #3d8b7a;
+  font-weight: 500;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
 }
 
 .word-count {
