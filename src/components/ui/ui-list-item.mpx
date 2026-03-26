@@ -1,7 +1,7 @@
 <template>
   <view class="ui-list-item {{border ? 'has-border' : ''}}" hover-class="{{clickable ? 'ui-list-item-hover' : ''}}" bindtap="onClick">
     <view class="item-icon" wx:if="{{icon}}">
-      <icon name="{{icon}}" size="22" color="{{iconColor}}" />
+      <icon name="{{icon}}" size="{{iconSize}}" color="{{iconColor}}" />
     </view>
     <view class="item-content">
       <text class="item-title">{{title}}</text>
@@ -27,6 +27,7 @@ createComponent({
     desc: { type: String, value: '' },
     icon: { type: String, value: '' },
     iconColor: { type: String, value: '#3d8b7a' },
+    iconSize: { type: Number, value: 24 },
     extra: { type: String, value: '' },
     arrow: { type: Boolean, value: false },
     clickable: { type: Boolean, value: false },
@@ -83,18 +84,27 @@ createComponent({
   display: flex;
   flex-direction: column;
   justify-content: center;
+  min-width: 0; /* 关键：解决 flex 下子元素文本溢出问题 */
 }
 
 .item-title {
+  display: block;
   font-size: 32rpx;
   color: #000000;
   line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .item-desc {
+  display: block;
   font-size: 26rpx;
   color: #8E8E93;
   margin-top: 4rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .item-extra {
