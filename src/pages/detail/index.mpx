@@ -37,11 +37,11 @@
             </view>
             <text class="card-title">内容摘要</text>
           </view>
-          <scroll-view scroll-y class="card-content summary-content">
+          <view class="card-content summary-content">
             <view class="summary-text">
               <mp-html content="{{summaryHtml}}" tag-style="{{tagStyle}}" />
             </view>
-          </scroll-view>
+          </view>
           <view class="card-actions">
             <view class="action-btn" bindtap="copySummary">
               <icon name="copy" size="16" color="#6b7280" />
@@ -75,11 +75,11 @@
             </view>
             <view class="word-count">{{wordCount}} 字</view>
           </view>
-          <scroll-view scroll-y class="card-content transcript-content">
+          <view class="card-content transcript-content">
             <view class="transcript-text">
               <mp-html content="{{transcriptHtml}}" tag-style="{{tagStyle}}" />
             </view>
-          </scroll-view>
+          </view>
           <view class="card-actions">
             <view class="action-btn" bindtap="copyTranscript">
               <icon name="copy" size="16" color="#6b7280" />
@@ -586,7 +586,7 @@ createPage({
 
 /* 内容区域 */
 .content-wrapper {
-  padding: 24rpx 32rpx;
+  padding: 0 0 24rpx;
 }
 
 /* 转录结果区域 */
@@ -597,10 +597,8 @@ createPage({
 /* 结果卡片 */
 .result-card {
   background: #ffffff;
-  border-radius: 24rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+  padding: 32rpx 40rpx;
+  margin-bottom: 16rpx;
 }
 
 .card-header {
@@ -663,20 +661,12 @@ createPage({
 
 .card-content {
   margin-bottom: 24rpx;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  background: #f9fafb;
-  border: 1rpx solid #f3f4f6;
-  -webkit-overflow-scrolling: touch;
+  padding: 16rpx 0;
 }
 
-.summary-content {
-  max-height: 500rpx;
-}
-
+.summary-content,
 .transcript-content {
-  min-height: 300rpx;
-  max-height: 60vh;
+  min-height: 200rpx;
 }
 
 .summary-text,
