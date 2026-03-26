@@ -20,20 +20,24 @@
 
       <!-- 登录按钮 -->
       <view class="login-section">
-        <button
-          class="login-btn {{loading ? 'loading' : ''}}"
-          bindtap="handleLogin"
-          disabled="{{loading}}"
+        <!-- 替换原先手写冗余样式的按钮，充分使用统一的 ui-button -->
+        <ui-button 
+          type="primary" 
+          size="large" 
+          block="{{true}}" 
+          disabled="{{loading}}" 
+          bind:click="handleLogin"
         >
           <view wx:if="{{loading}}" class="loading-wrapper">
             <view class="loading-spinner"></view>
-            <text>登录中...</text>
+            <text style="margin-left: 8rpx;">登录中...</text>
           </view>
           <block wx:else>
-            <!--<icon name="wechat" size="20" color="#ffffff" />-->
+            <!-- 若需内联图标，可以放开下方注释，且保持间距 -->
+            <!-- <icon name="wechat" size="20" color="#ffffff" style="margin-right: 8rpx;" /> -->
             <text>微信一键登录</text>
           </block>
-        </button>
+        </ui-button>
 
         <view class="privacy-tips">
           <text>登录即表示您同意</text>
@@ -115,12 +119,12 @@ createPage({
 <style>
 .login-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #f0f7f4 0%, #dcede6 100%);
+  background: #F2F2F7; /* iOS 18 System Background */
   position: relative;
   overflow: hidden;
 }
 
-/* 装饰背景 */
+/* 装饰背景 - 保留悬浮小圆点作为点缀，配合模糊效果 */
 .bg-decoration {
   position: absolute;
   top: 0;
@@ -134,28 +138,29 @@ createPage({
 .circle {
   position: absolute;
   border-radius: 50%;
-  background: linear-gradient(180deg, rgba(61, 139, 122, 0.1) 0%, rgba(45, 111, 97, 0.05) 100%);
+  background: rgba(61, 139, 122, 0.15); /* 使用微弱的主题翠绿色 */
+  filter: blur(20px); /* 保持适度的柔和苹果式毛玻璃渲染 */
 }
 
 .circle-1 {
-  width: 600rpx;
-  height: 600rpx;
-  top: -200rpx;
-  right: -100rpx;
+  width: 400rpx;
+  height: 400rpx;
+  top: -100rpx;
+  right: -50rpx;
 }
 
 .circle-2 {
-  width: 400rpx;
-  height: 400rpx;
-  bottom: 100rpx;
-  left: -100rpx;
+  width: 250rpx;
+  height: 250rpx;
+  top: 40%;
+  left: -80rpx;
 }
 
 .circle-3 {
-  width: 300rpx;
-  height: 300rpx;
-  bottom: -50rpx;
-  right: 50rpx;
+  width: 320rpx;
+  height: 320rpx;
+  bottom: -40rpx;
+  right: 40rpx;
 }
 
 /* 主要内容 */
@@ -175,33 +180,32 @@ createPage({
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 120rpx;
+  margin-bottom: 80rpx; /* 收紧间距 */
 }
 
 .logo-icon {
-  width: 140rpx;
-  height: 140rpx;
-  background: #3d8b7a;
-  border-radius: 32rpx;
+  width: 160rpx;
+  height: 160rpx;
+  background: #3d8b7a; /* 恢复主色调，作为视觉焦点 */
+  border-radius: 36rpx; /* Apple Squircle */
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 32rpx;
-  box-shadow: 0 8rpx 24rpx rgba(61, 139, 122, 0.3);
+  box-shadow: 0 16rpx 32rpx rgba(61, 139, 122, 0.25); /* 带有主题色的柔和弥散阴影 */
 }
 
 .app-name {
-  font-size: 44rpx;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #000000;
   margin-bottom: 12rpx;
-  letter-spacing: 2rpx;
+  letter-spacing: -1rpx; /* Apple Typography typically uses slight negative tracking for large titles */
 }
 
 .app-slogan {
-  font-size: 26rpx;
-  color: #6b7280;
-  letter-spacing: 1rpx;
+  font-size: 28rpx;
+  color: #8E8E93; /* iOS Secondary Text */
 }
 
 /* 登录区域 */
@@ -209,79 +213,48 @@ createPage({
   width: 100%;
 }
 
-.login-btn {
-  width: 100%;
-  height: 96rpx;
-  background: #3d8b7a;
-  border-radius: 48rpx;
-  display: flex;
+.loading-wrapper {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 16rpx;
-  border: none;
-  box-shadow: 0 8rpx 24rpx rgba(61, 139, 122, 0.3);
-  transition: all 0.2s ease;
-}
-
-.login-btn::after {
-  border: none;
-}
-
-.login-btn text {
-  font-size: 32rpx;
-  color: #ffffff;
-  font-weight: 500;
-}
-
-button.login-btn[disabled]:not([type]),
-button.login-btn[disabled] {
-  background: #3d8b7a !important;
-  color: #ffffff !important;
-  opacity: 0.7;
-}
-
-.login-btn.loading {
-  opacity: 0.7;
-}
-
-.login-btn:active {
-  transform: scale(0.98);
-  box-shadow: 0 4rpx 12rpx rgba(61, 139, 122, 0.2);
-}
-
-.loading-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
 }
 
 .loading-spinner {
-  width: 38rpx;
-  height: 38rpx;
+  width: 32rpx;
+  height: 32rpx;
   border-radius: 50%;
   background: conic-gradient(from 180deg at 50% 50%, rgba(255, 255, 255, 0) 0deg, rgba(255, 255, 255, 0.1) 140deg, rgba(255, 255, 255, 0.4) 220deg, rgba(255, 255, 255, 1) 360deg);
-  -webkit-mask: radial-gradient(transparent 14rpx, #000 15rpx);
-  mask: radial-gradient(transparent 14rpx, #000 15rpx);
+  -webkit-mask: radial-gradient(transparent 12rpx, #000 13rpx);
+  mask: radial-gradient(transparent 12rpx, #000 13rpx);
   animation: spin 0.9s steps(12, end) infinite;
 }
 
 /* 隐私提示 */
 .privacy-tips {
-  margin-top: 32rpx;
+  margin-top: 40rpx;
   text-align: center;
 }
 
 .privacy-tips text {
-  font-size: 24rpx;
-  color: #9ca3af;
+  font-size: 26rpx;
+  color: #8E8E93; /* iOS Secondary string */
 }
 
 .privacy-tips .link {
-  color: #3d8b7a;
-  text-decoration: underline;
+  color: #000000; /* Apple HIG uses active color or black for emphasize */
+  font-weight: 500;
 }
 
 .privacy-tips .link:active {
   opacity: 0.7;
 }
 </style>
+
+<script type="application/json">
+{
+  "usingComponents": {
+    "icon": "../../components/icon",
+    "ui-button": "../../components/ui/ui-button"
+  }
+}
+</script>
