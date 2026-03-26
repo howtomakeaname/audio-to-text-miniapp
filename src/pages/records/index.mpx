@@ -37,7 +37,7 @@
         <view class="file-info">
           <text class="file-name">{{item.originalName}}</text>
           <view class="file-meta">
-            <text>{{item.durationStr}}</text>
+            <text>{{item.durationStr||'--'}}</text>
             <text class="dot">·</text>
             <text>{{item.sizeStr}}</text>
             <text class="dot">·</text>

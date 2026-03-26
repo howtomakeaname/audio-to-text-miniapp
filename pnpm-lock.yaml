@@ -29,6 +29,12 @@ importers:
       '@mpxjs/utils':
         specifier: ^2.10.0
         version: 2.10.18(@mpxjs/core@2.10.19)
+      marked:
+        specifier: ^17.0.5
+        version: 17.0.5
+      mp-html:
+        specifier: ^2.5.2
+        version: 2.5.2
       pinia:
         specifier: ^2.0.14
         version: 2.3.1(typescript@5.9.3)(vue@2.7.16)
@@ -3165,6 +3171,11 @@ packages:
     resolution: {integrity: sha512-g3FeP20LNwhALb/6Cz6Dd4F2ngze0jz7tbzrD2wAV+o9FeNHe4rL+yK2md0J/fiSf1sa1ADhXqi5+oVwOM/eGw==}
     engines: {node: '>=8'}
 
+  marked@17.0.5:
+    resolution: {integrity: sha512-6hLvc0/JEbRjRgzI6wnT2P1XuM1/RrrDEX0kPt0N7jGm1133g6X7DlxFasUIx+72aKAr904GTxhSLDrd5DIlZg==}
+    engines: {node: '>= 20'}
+    hasBin: true
+
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
@@ -3278,6 +3289,9 @@ packages:
 
   module-alias@2.3.4:
     resolution: {integrity: sha512-bOclZt8hkpuGgSSoG07PKmvzTizROilUTvLNyrMqvlC9snhs7y7GzjNWAVbISIOlhCP1T14rH1PDAV9iNyBq/w==}
+
+  mp-html@2.5.2:
+    resolution: {integrity: sha512-45e8c32Qgux4YU4iC3qCSFsOh3y+RwPwZ+iz/vvLkDgSGWk+1zsL4WUzWWQc9w3AsAfkaD/QR0oIufIDngBmXA==}
 
   mpx-eslint-parser@0.0.14:
     resolution: {integrity: sha512-pEAw0GSEAK40TVbQdw50ReU5EU+5jtdjq3Tka2a8KSR7UsHi0lGOT7yGVjnu+0jtnXi9p+UUXAysHMJc7Rs6Ug==}
@@ -8324,6 +8338,8 @@ snapshots:
     dependencies:
       semver: 6.3.1
 
+  marked@17.0.5: {}
+
   math-intrinsics@1.1.0: {}
 
   mdn-data@2.0.14: {}
@@ -8411,6 +8427,8 @@ snapshots:
       ufo: 1.6.3
 
   module-alias@2.3.4: {}
+
+  mp-html@2.5.2: {}
 
   mpx-eslint-parser@0.0.14(eslint@9.39.4(jiti@2.6.1)):
     dependencies:

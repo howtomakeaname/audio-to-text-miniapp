@@ -7,7 +7,9 @@
         <text class="card-title">内容摘要</text>
       </view>
       <view class="card-content">
-        <text class="summary-text">{{file.transcription.summaryText}}</text>
+        <view class="summary-text">
+          <mp-html content="{{summaryHtml}}" tag-style="{{tagStyle}}" />
+        </view>
       </view>
       <view class="card-actions">
         <view class="action-btn" bindtap="handleCopySummary">
@@ -41,7 +43,9 @@
         <view class="word-count">{{computedWordCount}} 字</view>
       </view>
       <view class="card-content">
-        <text class="transcript-text" user-select="{{true}}">{{showPolished ? file.transcription.polishedText : file.transcription.transcriptText}}</text>
+        <view class="transcript-text" user-select="{{true}}">
+          <mp-html content="{{transcriptHtml}}" tag-style="{{tagStyle}}" />
+        </view>
       </view>
       <view class="card-actions">
         <view class="action-btn" bindtap="handleCopyTranscript">
@@ -59,6 +63,7 @@
 
 <script>
 import { createComponent } from '@mpxjs/core'
+import { marked } from 'marked'
 
 createComponent({
   properties: {
@@ -68,7 +73,17 @@ createComponent({
     }
   },
   data: {
-    showPolished: false
+    showPolished: false,
+    tagStyle: {
+      p: 'line-height: inherit; margin-bottom: 0.5em;',
+      h1: 'font-size: 1.5em; font-weight: bold; margin-bottom: 0.5em; color: #1f2937;',
+      h2: 'font-size: 1.25em; font-weight: bold; margin-bottom: 0.5em; color: #1f2937;',
+      h3: 'font-size: 1.1em; font-weight: bold; margin-bottom: 0.5em; color: #1f2937;',
+      ul: 'padding-left: 1.2em; margin-bottom: 0.5em; list-style-type: disc;',
+      ol: 'padding-left: 1.2em; margin-bottom: 0.5em; list-style-type: decimal;',
+      li: 'margin-bottom: 0.25em;',
+      blockquote: 'border-left: 4px solid #d1d5db; padding-left: 10px; color: #6b7280; background: #f3f4f6; margin-bottom: 0.5em; border-radius: 4px;'
+    }
   },
   computed: {
     computedWordCount() {
@@ -76,6 +91,15 @@ createComponent({
         ? this.file?.transcription?.polishedText 
         : this.file?.transcription?.transcriptText
       return text ? text.length : 0
+    },
+    summaryHtml() {
+      const text = this.file?.transcription?.summaryText || ''
+      return text ? marked.parse(text) : ''
+    },
+    transcriptHtml() {
+      const textKey = this.showPolished ? 'polishedText' : 'transcriptText'
+      const text = this.file?.transcription?.[textKey] || ''
+      return text ? marked.parse(text) : ''
     }
   },
   methods: {
@@ -207,7 +231,8 @@ createComponent({
 {
   "component": true,
   "usingComponents": {
-    "icon": "../../../components/icon"
+    "icon": "../../../components/icon",
+    "mp-html": "mp-html"
   }
 }
 </script>

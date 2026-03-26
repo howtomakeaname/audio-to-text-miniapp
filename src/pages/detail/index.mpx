@@ -38,7 +38,9 @@
             <text class="card-title">内容摘要</text>
           </view>
           <view class="card-content">
-            <text class="summary-text">{{file.transcription.summaryText}}</text>
+            <view class="summary-text">
+              <mp-html content="{{summaryHtml}}" tag-style="{{tagStyle}}" />
+            </view>
           </view>
           <view class="card-actions">
             <view class="action-btn" bindtap="copySummary">
@@ -73,8 +75,10 @@
             </view>
             <view class="word-count">{{wordCount}} 字</view>
           </view>
-          <view class="card-content">
-            <text class="transcript-text">{{showPolished ? file.transcription.polishedText : file.transcription.transcriptText}}</text>
+          <view class="card-content transcript-content">
+            <view class="transcript-text">
+              <mp-html content="{{transcriptHtml}}" tag-style="{{tagStyle}}" />
+            </view>
           </view>
           <view class="card-actions">
             <view class="action-btn" bindtap="copyTranscript">
@@ -112,6 +116,7 @@ import { createPage } from '@mpxjs/core'
 import { useFileStore } from '../../stores/file'
 import { getAudioPlayUrl, refreshAudioPlayUrl } from '../../api/file'
 import { formatDuration, formatFileSize, formatTime, formatDate } from '../../utils/format'
+import { marked } from 'marked'
 
 createPage({
   data: {
@@ -132,7 +137,29 @@ createPage({
     pollingTimer: null,
     playUrl: null,
     playUrlExpiredAt: null,
-    showPolished: false
+    showPolished: false,
+    tagStyle: {
+      p: 'line-height: inherit; margin-bottom: 0.5em;',
+      h1: 'font-size: 1.5em; font-weight: bold; margin-bottom: 0.5em; color: #1f2937;',
+      h2: 'font-size: 1.25em; font-weight: bold; margin-bottom: 0.5em; color: #1f2937;',
+      h3: 'font-size: 1.1em; font-weight: bold; margin-bottom: 0.5em; color: #1f2937;',
+      ul: 'padding-left: 1.2em; margin-bottom: 0.5em; list-style-type: disc;',
+      ol: 'padding-left: 1.2em; margin-bottom: 0.5em; list-style-type: decimal;',
+      li: 'margin-bottom: 0.25em;',
+      blockquote: 'border-left: 4px solid #d1d5db; padding-left: 10px; color: #6b7280; background: #f3f4f6; margin-bottom: 0.5em; border-radius: 4px;'
+    }
+  },
+
+  computed: {
+    summaryHtml() {
+      const text = this.file?.transcription?.summaryText || ''
+      return text ? marked.parse(text) : ''
+    },
+    transcriptHtml() {
+      const textKey = this.showPolished ? 'polishedText' : 'transcriptText'
+      const text = this.file?.transcription?.[textKey] || ''
+      return text ? marked.parse(text) : ''
+    }
   },
 
   onLoad(options) {
@@ -206,8 +233,8 @@ createPage({
         wordCount
       })
 
-      // 获取音频播放URL
-      if (file.ossKey) {
+      // 获取音频播放URL，仅在没有URL或快过期时请求
+      if (file.ossKey && (!this.data.playUrl || this.isPlayUrlExpired())) {
         this.fetchAudioPlayUrl()
       }
 
@@ -282,7 +309,7 @@ createPage({
   // 检查播放URL是否过期
   isPlayUrlExpired() {
     const { playUrlExpiredAt } = this.data
-    if (!playUrlExpiredAt) return false
+    if (!playUrlExpiredAt) return true
     const expiredTime = new Date(playUrlExpiredAt).getTime()
     const now = Date.now()
     // 如果距离过期时间不足5分钟，则认为已过期
