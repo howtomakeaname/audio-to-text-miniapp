@@ -1,10 +1,10 @@
 <template>
   <view class="file-card-wrapper">
-    <ui-list>
+    <ui-list transparent="{{true}}">
       <ui-list-item
+        transparent="{{true}}"
         title="{{file.originalName}}"
-        desc="{{file.durationStr}} · {{file.sizeStr}} · {{file.createdAtStr}}"
-        icon="audio"
+        icon=""
         iconSize="32"
         iconColor="#3d8b7a"
         border="{{false}}"
@@ -37,7 +37,7 @@ createComponent({
 
 <style>
 .file-card-wrapper {
-  margin: 24rpx 32rpx 32rpx;
+  margin: 0;
 }
 
 .more-action {

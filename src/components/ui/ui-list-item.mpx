@@ -1,5 +1,5 @@
 <template>
-  <view class="ui-list-item {{border ? 'has-border' : ''}}" hover-class="{{clickable ? 'ui-list-item-hover' : ''}}" bindtap="onClick">
+  <view class="ui-list-item {{border ? 'has-border' : ''}} {{transparent ? 'is-transparent' : ''}}" hover-class="{{clickable ? 'ui-list-item-hover' : ''}}" bindtap="onClick">
     <view class="item-icon" wx:if="{{icon}}">
       <icon name="{{icon}}" size="{{iconSize}}" color="{{iconColor}}" />
     </view>
@@ -31,7 +31,8 @@ createComponent({
     extra: { type: String, value: '' },
     arrow: { type: Boolean, value: false },
     clickable: { type: Boolean, value: false },
-    border: { type: Boolean, value: true }
+    border: { type: Boolean, value: true },
+    transparent: { type: Boolean, value: false }
   },
   methods: {
     onClick(e) {
@@ -51,6 +52,10 @@ createComponent({
   background: #ffffff;
   position: relative;
   transition: background-color 0.2s;
+}
+
+.ui-list-item.is-transparent {
+  background: transparent;
 }
 
 .has-border::after {

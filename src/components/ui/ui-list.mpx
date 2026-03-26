@@ -1,5 +1,5 @@
 <template>
-  <view class="ui-list">
+  <view class="ui-list {{transparent ? 'is-transparent' : ''}}">
     <slot></slot>
   </view>
 </template>
@@ -7,7 +7,11 @@
 <script>
 import { createComponent } from '@mpxjs/core'
 
-createComponent()
+createComponent({
+  properties: {
+    transparent: { type: Boolean, value: false }
+  }
+})
 </script>
 
 <style>
@@ -16,6 +20,11 @@ createComponent()
   border-radius: 20rpx; /* iOS 18 Inset Grouped corners */
   margin: 24rpx 32rpx;
   overflow: hidden;
+}
+
+.ui-list.is-transparent {
+  background: transparent;
+  margin: 0;
 }
 </style>
 <script type="application/json">{"component":true}</script>

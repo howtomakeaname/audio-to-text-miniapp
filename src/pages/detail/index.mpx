@@ -15,23 +15,6 @@
 
     <!-- 文件信息卡片 -->
     <view class="content-wrapper">
-      <file-meta file="{{file}}" bind:showactions="showActions" />
-
-      <!-- 音频播放器 -->
-      <audio-player
-        wx:if="{{playUrl}}"
-        playUrl="{{playUrl}}"
-        file="{{file}}"
-        isPlaying="{{isPlaying}}"
-        duration="{{duration}}"
-        currentTime="{{currentTime}}"
-        currentTimeStr="{{currentTimeStr}}"
-        durationStr="{{durationStr}}"
-        bind:togglePlay="togglePlay"
-        bind:sliderChange="onSliderChange"
-        bind:sliderChanging="onSliderChanging"
-      />
-
       <!-- 转录状态卡片 -->
       <status-card
         file="{{file}}"
@@ -117,12 +100,26 @@
     <view class="bottom-spacer"></view>
   </view>
 
-  <!-- 底部操作栏 -->
-  <view class="bottom-bar" wx:if="{{file}}">
-    <view class="btn-wrap">
-      <ui-button block type="danger" bind:click="deleteFile">删除</ui-button>
-    </view>
-    <view class="btn-wrap" wx:if="{{file.transcriptionStatus === 'failed'}}">
+  <!-- 底部操作栏与播放器 -->
+  <view class="bottom-bar" wx:if="{{file}}" style="padding-bottom: calc(24rpx + env(safe-area-inset-bottom));">
+    <file-meta file="{{file}}" bind:showactions="showActions" />
+
+    <!-- 音频播放器 -->
+    <audio-player
+      wx:if="{{playUrl}}"
+      playUrl="{{playUrl}}"
+      file="{{file}}"
+      isPlaying="{{isPlaying}}"
+      duration="{{duration}}"
+      currentTime="{{currentTime}}"
+      currentTimeStr="{{currentTimeStr}}"
+      durationStr="{{durationStr}}"
+      bind:togglePlay="togglePlay"
+      bind:sliderChange="onSliderChange"
+      bind:sliderChanging="onSliderChanging"
+    />
+
+    <view class="btn-wrap" wx:if="{{file.transcriptionStatus === 'failed'}}" style="margin-top: 16rpx; padding: 0 32rpx;">
       <ui-button block type="primary" bind:click="reupload">重新转录</ui-button>
     </view>
   </view>
@@ -161,6 +158,22 @@
       />
     </view>
   </ui-modal>
+
+  <!-- 音频详情弹窗 -->
+  <ui-modal
+    visible="{{showInfoModal}}"
+    title="音频详情"
+    showCancel="{{false}}"
+    confirmText="我知道了"
+    bindconfirm="closeInfoModal"
+  >
+    <view style="margin-top: 30rpx; padding: 0 10rpx; text-align: left; font-size: 28rpx; color: #3C3C43;">
+      <view wx:for="{{audioInfoList}}" wx:key="label" style="display: flex; margin-bottom: 24rpx; line-height: 1.5;">
+        <view style="color: #8E8E93; width: 140rpx; flex-shrink: 0;">{{item.label}}</view>
+        <view style="color: #000000; flex: 1; word-break: break-all; margin-left: 20rpx;">{{item.value}}</view>
+      </view>
+    </view>
+  </ui-modal>
 </template>
 
 <script>
@@ -194,6 +207,8 @@ createPage({
     isFullscreen: false,
     fullscreenTitle: '',
     fullscreenContent: '',
+    showInfoModal: false,
+    audioInfoList: [],
     tagStyle: {
       p: 'line-height: 1.8; margin-bottom: 0.8em; text-align: justify;',
       h1: 'font-size: 1.4em; font-weight: 600; margin-bottom: 0.6em; margin-top: 0.8em; color: #111827;',
@@ -522,10 +537,41 @@ createPage({
     }
   },
 
-  shareSummary() {
-    wx.showShareMenu({
-      withShareTicket: true,
-      menus: ['shareAppMessage', 'shareTimeline']
+  showAudioInfoModal() {
+    const { file } = this.data
+    if (!file) return
+
+    const sizeStr = formatFileSize(file.fileSize)
+    const durationStr = formatDuration(file.duration)
+    const dateStr = formatDate(file.createdAt)
+    
+    // 状态映射
+    const statusMap = {
+      'processing': '转录中',
+      'completed': '已完成',
+      'failed': '转录失败',
+      'pending': '等待中'
+    }
+    const currentStatus = file.transcriptionStatus || '未知'
+    const statusStr = statusMap[currentStatus] || currentStatus
+
+    const infoList = [
+      { label: '文件名称', value: file.originalName || file.name || '未知' },
+      { label: '文件大小', value: sizeStr },
+      { label: '音频时长', value: durationStr },
+      { label: '上传时间', value: dateStr },
+      { label: '识别状态', value: statusStr }
+    ]
+
+    this.setData({
+      showInfoModal: true,
+      audioInfoList: infoList
+    })
+  },
+
+  closeInfoModal() {
+    this.setData({
+      showInfoModal: false
     })
   },
 
@@ -711,12 +757,12 @@ createPage({
 
   showActions() {
     wx.showActionSheet({
-      itemList: ['分享', '重命名', '删除'],
-      itemColor: '#dc2626',
+      itemList: ['查看详情', '重命名', '删除'],
+      itemColor: '#1f2937',
       success: (res) => {
         switch (res.tapIndex) {
           case 0:
-            this.shareSummary()
+            this.showAudioInfoModal()
             break
           case 1:
             this.openRenameModal()
@@ -858,7 +904,7 @@ createPage({
 .detail-page {
   min-height: 100vh;
   background: #F2F2F7; /* iOS 18 System Background */
-  padding-bottom: calc(140rpx + env(safe-area-inset-bottom));
+  padding-bottom: calc(280rpx + env(safe-area-inset-bottom));
 }
 
 /* 页面头部 - 渐变背景 */
@@ -1011,7 +1057,7 @@ createPage({
 
 /* 底部占位 */
 .bottom-spacer {
-  height: 120rpx;
+  height: 280rpx;
 }
 
 /* 底部操作栏 */
@@ -1020,14 +1066,11 @@ createPage({
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(242, 242, 247, 0.8);
+  background: rgba(242, 242, 247, 0.95);
   backdrop-filter: blur(20px);
-  padding: 24rpx 32rpx calc(24rpx + env(safe-area-inset-bottom));
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24rpx;
-  box-shadow: 0 -1rpx 0 rgba(0, 0, 0, 0.1);
+  padding: 0;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.05);
+  border-top: 1rpx solid rgba(0, 0, 0, 0.05);
 }
 
 .bottom-bar .btn-wrap {

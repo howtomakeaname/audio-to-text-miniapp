@@ -75,15 +75,9 @@ createComponent({
 
 <style>
 .player-card {
-  background: #ffffff;
-  padding: 32rpx;
-  margin: 0 32rpx 32rpx;
-  border-radius: 20rpx;
-  position: sticky;
-  /* 避开自定义导航栏 (动态计算的高度) 外加一个小空隙 (16rpx) */
-  top: calc(var(--nav-height, calc(88rpx + env(safe-area-inset-top))) + 16rpx);
-  z-index: 10;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
+  background: transparent;
+  padding: 10rpx 40rpx 20rpx;
+  margin: 0;
 }
 
 .player-controls {
