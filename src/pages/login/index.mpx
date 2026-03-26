@@ -122,6 +122,8 @@ createPage({
   background: #F2F2F7; /* iOS 18 System Background */
   position: relative;
   overflow: hidden;
+  /* 确保顶部完全沉浸延伸，配合 custom navigationStyle */
+  padding-top: env(safe-area-inset-top); 
 }
 
 /* 装饰背景 - 保留悬浮小圆点作为点缀，配合模糊效果 */
@@ -252,6 +254,8 @@ createPage({
 
 <script type="application/json">
 {
+  "navigationBarTitleText": "",
+  "navigationStyle": "custom",
   "usingComponents": {
     "icon": "../../components/icon",
     "ui-button": "../../components/ui/ui-button"

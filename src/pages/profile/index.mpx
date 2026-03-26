@@ -240,13 +240,17 @@ createPage({
   min-height: 100vh;
   background: #f9fafb;
   padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
+  /* 取消系统导航栏后，如果外层没有沉浸，可以放这里。但因为 user-card 会贴头，所以我们不需要在这里加 padding-top */
 }
 
 /* 用户信息卡片 */
 .user-card {
   position: relative;
   background: linear-gradient(180deg, #3d8b7a 0%, #2d6f61 100%);
-  padding: 48rpx 32rpx;
+  /* 延长底部背景色块，使得整体绿色背景更加开阔、视觉上更和谐 */
+  padding: 48rpx 32rpx 120rpx;
+  /* 增加了状态栏（刘海安全区）和微信胶囊（44px即~88rpx）的偏移，保证内容不被顶部界面挡住 */
+  padding-top: calc(88rpx + 48rpx + env(safe-area-inset-top));
   overflow: hidden;
 }
 
@@ -285,6 +289,8 @@ createPage({
   z-index: 1;
   display: flex;
   align-items: center;
+  /* 调整用户信息区域的相对位置，使其在背景色块上看起来更协调 */
+  margin-top: 64rpx;
 }
 
 .avatar-wrapper {
@@ -328,7 +334,8 @@ createPage({
 /* 统计卡片 */
 .stats-section {
   padding: 0 32rpx;
-  margin-top: -32rpx;
+  /* 配合延长的背景，让白色卡片再往上穿透多一些，增加沉浸式层叠感 */
+  margin-top: -64rpx;
   position: relative;
   z-index: 2;
 }
@@ -441,3 +448,11 @@ createPage({
   height: 32rpx;
 }
 </style>
+
+<script type="application/json">
+{
+  "navigationBarTitleText": "",
+  "navigationStyle": "custom",
+  "usingComponents": {}
+}
+</script>
