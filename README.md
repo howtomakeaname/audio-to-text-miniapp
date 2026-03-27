@@ -4,15 +4,38 @@
 
 ## 效果图
 
-![上传界面](docs/images/upload-page.png)
-
-![记录界面](docs/images/records-page.png)
-
-![详情界面](docs/images/detail-page.png)
-
-![详情界面](docs/images/detail-page-1.png)
-
-![我的界面](docs/images/profile-page.png)
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/images/upload-page.png" width="200" alt="上传界面"/>
+      <br/>
+      <sub>上传界面</sub>
+    </td>
+    <td align="center">
+      <img src="docs/images/records-page.png" width="200" alt="记录界面"/>
+      <br/>
+      <sub>上传记录界面</sub>
+    </td>
+    <td align="center">
+      <img src="docs/images/detail-page.png" width="200" alt="转录详情"/>
+      <br/>
+      <sub>转录详情</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="docs/images/detail-page-1.png" width="200" alt="转录详情"/>
+      <br/>
+      <sub>转录详情</sub>
+    </td>
+    <td align="center">
+      <img src="docs/images/profile-page.png" width="200" alt="个人中心"/>
+      <br/>
+      <sub>个人中心</sub>
+    </td>
+    <td></td>
+  </tr>
+</table>
 
 ## 技术栈
 
@@ -97,14 +120,14 @@ pnpm run build:web      # Web
 
 ```bash
 # 同时输出多平台
-npm run serve -- --targets=wx,ali,web
+pnpm run serve -- --targets=wx,ali,web
 
 # 指定其他小程序平台
-npm run serve -- --targets=swan    # 百度
-npm run serve -- --targets=tt      # 头条
-npm run serve -- --targets=qq      # QQ
-npm run serve -- --targets=jd      # 京东
-npm run serve -- --targets=ks      # 快手
+pnpm run serve -- --targets=swan    # 百度
+pnpm run serve -- --targets=tt      # 头条
+pnpm run serve -- --targets=qq      # QQ
+pnpm run serve -- --targets=jd      # 京东
+pnpm run serve -- --targets=ks      # 快手
 ```
 
 ## 相关文档
